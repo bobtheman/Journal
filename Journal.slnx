@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Journal/Journal.csproj" />
+  <Project Path="Journal.Core/Journal.Core.csproj" />
+  <Project Path="Journal.Tests/Journal.Tests.csproj" />
+</Solution>

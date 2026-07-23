@@ -1,0 +1,30 @@
+@page "/"
+@using Journal.Components.Shared
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-4">
+    <MudText Typo="Typo.h4"></MudText>
+    <MudIconButton Icon="@(_selectedDateHasEntry ? Icons.Material.Filled.Edit : Icons.Material.Filled.Add)"
+                   Color="Color.Primary" Variant="Variant.Filled" OnClick="AddEntryAsync" />
+</MudStack>
+
+<MudPaper Class="@($"pa-4 mb-4 selected-day-card {(_selectedDateHasEntry ? "selected-day-card--has-entry" : "")}")" Elevation="0">
+    <MudDatePicker Label="Date" Date="_selectedDate" DateChanged="OnDateChanged" DateFormat="dddd, dd MMMM yyyy" MaxDate="DateTime.Today" />
+</MudPaper>
+
+<MudList T="DateTime">
+    @foreach (var summary in _summaries)
+    {
+        <MudListItem T="DateTime" OnClick="@(() => OpenEntryAsync(summary.EntryDate))">
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                <MudStack Spacing="0">
+                    <MudText Typo="Typo.body1">@(summary.Title == string.Empty ? summary.EntryDate.ToString("d MMM yyyy") : summary.Title)</MudText>
+                    <MudText Typo="Typo.caption">@summary.EntryDate.ToString("d MMM yyyy")</MudText>
+                </MudStack>
+                @if (summary.Mood.HasValue)
+                {
+                    <MudIcon Icon="@MoodIcons.GetIcon(summary.Mood.Value)" Color="@MoodIcons.GetColor(summary.Mood.Value)" />
+                }
+            </MudStack>
+        </MudListItem>
+    }
+</MudList>

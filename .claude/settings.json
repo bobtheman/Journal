@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet --version)",
+      "Bash(dotnet add *)",
+      "Bash(dotnet nuget *)",
+      "Bash(dotnet new *)",
+      "Bash(rm \"c:/Projects/Journal/Journal.Core/Class1.cs\")",
+      "Bash(dotnet build *)",
+      "Bash(tasklist)",
+      "Bash(powershell -Command \"Get-Process -Name Journal -ErrorAction SilentlyContinue\")",
+      "PowerShell(Get-Process -Name Journal -ErrorAction SilentlyContinue)",
+      "Bash(timeout 40 dotnet build -t:Run -f net10.0-windows10.0.19041.0)",
+      "Read(//c/Projects/Accredit-App-Maui-Checkin/**)",
+      "Bash(xargs grep -liE \"safe|SafeArea|Padding.*Top\")",
+      "Bash(grep -rliE \"safe-area|safe_area|WindowsOverlappedPresenter|AppWindow|CenterOnScreen|env\\\\\\(safe\" \"C:/Projects/Accredit-App-Maui-Checkin\" 2>/dev/null | head -30)",
+      "Bash(SRC=\"C:/Projects/Accredit-App-Maui-Checkin/Accredit-App-Maui-Checkin\" *)",
+      "Read(//c/Projects/Accredit-App-Maui-Checkin/Accredit-App-Maui-Checkin/**)",
+      "Read(//c/Projects/Accredit-App-Maui-Checkin/Accredit-App-Maui-Checkin/Components/**)",
+      "Read(//c/Projects/Accredit-App-Maui-Checkin/Accredit-App-Maui-Checkin/Components/Layout/**)",
+      "Read(//c/Projects/Accredit-App-Maui-Checkin/Accredit-App-Maui-Checkin/wwwroot/css/**)",
+      "Bash(find /c/Projects -maxdepth 2 -iname \"*Accredit.Schema*\" -o -iname \"*Accredit*Schema*\" 2>/dev/null | head -20)",
+      "Read(//c/Projects/**)",
+      "Bash(find /c/Projects/AccreditNbaApi/Accredit.Schema -iname \"*pre*deploy*\" -o -iname \"*Script.PreDeployment*\" 2>/dev/null | head -20 *)",
+      "Read(//c/Projects/AccreditNbaApi/Accredit.Schema/**)",
+      "Bash(xargs grep -l \"WorkflowConditions\")",
+      "Bash(grep -rl \"WorkflowConditions\" /c/Projects/AccreditNbaApi/Accredit.Schema --include=*.sql 2>/dev/null | grep -v \"/bin/\\\\|/obj/\")",
+      "Read(//c/Projects/AccreditNbaApi/**)",
+      "Bash(find / -iname \"MudBlazor.dll\" 2>/dev/null | head -5 *)",
+      "Read(//c//**)",
+      "Bash(grep -a -o ShowMessageBox /c/Users/RobertOwen/.nuget/packages/mudblazor/__TRACKED_VAR__/lib/net9.0/MudBlazor.dll)",
+      "Bash(python3 -)",
+      "Bash(find / -iname \"debug.keystore\" 2>/dev/null)",
+      "PowerShell(Get-ChildItem -Path \"$env:USERPROFILE\\\\.android\",\"$env:LOCALAPPDATA\\\\Xamarin\" -Recurse -Filter \"debug.keystore\" -ErrorAction SilentlyContinue -Force | Select-Object FullName)",
+      "Bash(V=\"9.7.0\" *)",
+      "Read(//c/Users/RobertOwen/.nuget/packages/mudblazor/9.7.0/staticwebassets/**)",
+      "Bash(cp \"/c/Users/RobertOwen/Downloads/IconKitchen-Output/android/res/mipmap-xxxhdpi/ic_launcher_background.png\" \"c:/Projects/Journal/Journal/Resources/AppIcon/appicon.png\")",
+      "Bash(cp \"/c/Users/RobertOwen/Downloads/IconKitchen-Output/android/res/mipmap-xxxhdpi/ic_launcher_foreground.png\" \"c:/Projects/Journal/Journal/Resources/AppIcon/appiconfg.png\")"
+    ]
+  }
+}

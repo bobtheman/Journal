@@ -1,0 +1,41 @@
+@using Journal.Components.Shared
+<MudDialog Class="journal-entry-dialog">
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="Cancel" Edge="Edge.Start" />
+            <MudText Typo="Typo.h6">@Date.ToString("dddd, d MMMM yyyy")</MudText>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        <MudContainer MaxWidth="MaxWidth.Small" Class="pa-0">
+            <MudTextField T="string" Label="Title" @bind-Value="_title" Variant="Variant.Outlined"
+                          spellcheck="true" Class="mb-4" />
+
+            <MudStack Row="true" Justify="Justify.Center" Spacing="1" Class="mb-4">
+                @foreach (var mood in MoodIcons.All)
+                {
+                    <MudIconButton Icon="@mood.Icon"
+                                   Color="@(_mood == mood.Value ? mood.Color : Color.Default)"
+                                   Size="Size.Large"
+                                   title="@mood.Label"
+                                   OnClick="@(() => _mood = mood.Value)" />
+                }
+            </MudStack>
+
+            <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small" Class="mb-2">
+                <MudIconButton Icon="@Icons.Material.Filled.FormatBold" OnClick="@(() => WrapSelectionAsync("**", "**"))" title="Bold" />
+                <MudIconButton Icon="@Icons.Material.Filled.FormatItalic" OnClick="@(() => WrapSelectionAsync("_", "_"))" title="Italic" />
+                <MudIconButton Icon="@Icons.Material.Filled.FormatListBulleted" OnClick="InsertBulletAsync" title="Bullet point" />
+            </MudButtonGroup>
+
+            <textarea @ref="_contentRef" @bind="_content" @bind:event="oninput"
+                      class="journal-textarea" rows="14" spellcheck="true"
+                      placeholder="What happened today?"></textarea>
+        </MudContainer>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Error" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Delete" OnClick="DeleteAsync">Delete</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Check" OnClick="SaveAsync">Save</MudButton>
+    </DialogActions>
+</MudDialog>

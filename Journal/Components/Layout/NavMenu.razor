@@ -1,0 +1,7 @@
+<MudNavMenu Class="pa-2">
+    <MudText Typo="Typo.subtitle2" Class="px-4 py-2">@(Username ?? "Journal")</MudText>
+    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Book">Journal</MudNavLink>
+    <MudNavLink Href="settings" Icon="@Icons.Material.Filled.Settings">Settings</MudNavLink>
+    <MudDivider Class="my-2" />
+    <MudNavLink OnClick="Logout" Icon="@Icons.Material.Filled.Logout">Logout</MudNavLink>
+</MudNavMenu>

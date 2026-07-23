@@ -1,0 +1,56 @@
+@page "/login"
+@layout LoginLayout
+
+<MudPaper Class="pa-8" Elevation="4" Style="width: 100%; max-width: 420px;">
+    <MudText Typo="Typo.h4" Class="mb-4" Align="Align.Center">Journal</MudText>
+
+    @if (_hasAccount)
+    {
+        <MudText Typo="Typo.body1" Class="mb-4" Align="Align.Center">Welcome back, @AuthService.Username</MudText>
+        <MudTextField T="string" Label="Password" @bind-Value="_password"
+                      InputType="@(_showPassword ? InputType.Text : InputType.Password)"
+                      Adornment="Adornment.End"
+                      AdornmentIcon="@(_showPassword ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
+                      OnAdornmentClick="@(() => _showPassword = !_showPassword)"
+                      Immediate="true" OnKeyUp="OnKeyUp" Class="mb-2" />
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-2">@_error</MudAlert>
+        }
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="LoginAsync" Disabled="_busy">
+            Unlock
+        </MudButton>
+        @if (_biometricAvailable)
+        {
+            <MudButton Variant="Variant.Text" Color="Color.Primary" FullWidth="true" Class="mt-2"
+                       StartIcon="@Icons.Material.Filled.Fingerprint" OnClick="BiometricLoginAsync" Disabled="_busy">
+                Use fingerprint
+            </MudButton>
+        }
+    }
+    else
+    {
+        <MudText Typo="Typo.body2" Class="mb-4" Align="Align.Center">Create your local account</MudText>
+        <MudTextField T="string" Label="Username" @bind-Value="_username" Class="mb-2" />
+        <MudTextField T="string" Label="Password" @bind-Value="_password"
+                      InputType="@(_showPassword ? InputType.Text : InputType.Password)"
+                      Adornment="Adornment.End"
+                      AdornmentIcon="@(_showPassword ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
+                      OnAdornmentClick="@(() => _showPassword = !_showPassword)"
+                      HelperText="@(_error is not null ? "At least 8 characters, with upper, lower, number and special character." : null)"
+                      Immediate="true" OnKeyUp="OnSetupKeyUp" Class="mb-2" />
+        <MudTextField T="string" Label="Confirm password" @bind-Value="_confirmPassword"
+                      InputType="@(_showConfirmPassword ? InputType.Text : InputType.Password)"
+                      Adornment="Adornment.End"
+                      AdornmentIcon="@(_showConfirmPassword ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
+                      OnAdornmentClick="@(() => _showConfirmPassword = !_showConfirmPassword)"
+                      Immediate="true" OnKeyUp="OnSetupKeyUp" Class="mb-2" />
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-2">@_error</MudAlert>
+        }
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="SetupAsync" Disabled="_busy">
+            Create account
+        </MudButton>
+    }
+</MudPaper>

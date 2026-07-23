@@ -1,0 +1,67 @@
+@using Journal.Services
+@implements IDisposable
+@inject ThemeService ThemeService
+
+<MudThemeProvider @ref="_themeProvider" Theme="Layout.MainLayout.AppTheme" IsDarkMode="_isDarkMode"
+                  IsDarkModeChanged="OnIsDarkModeChanged" ObserveSystemDarkModeChange="@(ThemeService.Mode == ThemeMode.System)" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<Router AppAssembly="typeof(MauiProgram).Assembly" NotFoundPage="typeof(Pages.NotFound)">
+    <Found Context="routeData">
+        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+</Router>
+
+@code {
+    private MudThemeProvider? _themeProvider;
+    private bool _isDarkMode;
+
+    protected override void OnInitialized()
+    {
+        ThemeService.Changed += OnThemeChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await ApplyThemeAsync();
+        }
+    }
+
+    private async Task ApplyThemeAsync()
+    {
+        if (_themeProvider is null)
+        {
+            return;
+        }
+
+        _isDarkMode = ThemeService.Mode switch
+        {
+            ThemeMode.Dark => true,
+            ThemeMode.Light => false,
+            _ => await _themeProvider.GetSystemDarkModeAsync()
+        };
+        StateHasChanged();
+    }
+
+    private void OnIsDarkModeChanged(bool value)
+    {
+        // Only fires when ObserveSystemDarkModeChange is on, i.e. Mode == System.
+        _isDarkMode = value;
+        StateHasChanged();
+    }
+
+    private async void OnThemeChanged()
+    {
+        await InvokeAsync(ApplyThemeAsync);
+    }
+
+    public void Dispose()
+    {
+        ThemeService.Changed -= OnThemeChanged;
+    }
+}
