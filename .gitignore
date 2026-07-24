@@ -3,3 +3,5 @@ bin/
 obj/
 *.user
 **/Resources/Raw/appsettings.json
+/.claude/settings.json
+/.claude/settings.json
