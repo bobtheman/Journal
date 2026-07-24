@@ -20,6 +20,9 @@ namespace Journal.Components.Shared
         [Parameter]
         public string CancelText { get; set; } = "Cancel";
 
+        [Parameter]
+        public MudBlazor.Color Color { get; set; } = MudBlazor.Color.Error;
+
         private void Confirm()
         {
             MudDialog.Close(DialogResult.Ok(true));

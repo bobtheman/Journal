@@ -27,7 +27,7 @@
             Last synced: @(SettingsService.LastSyncUtc?.ToLocalTime().ToString("g") ?? "never")
         </MudText>
         <MudStack Spacing="2">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="BackupAsync" Disabled="_busy">Backup now</MudButton>
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" FullWidth="true" OnClick="BackupAsync" Disabled="_busy">Backup now</MudButton>
             <MudButton Variant="Variant.Outlined" FullWidth="true" OnClick="RestoreAsync" Disabled="_busy">Restore latest</MudButton>
             <MudButton Variant="Variant.Outlined" Color="Color.Error" FullWidth="true" OnClick="SignOutAsync" Disabled="_busy">Sign out</MudButton>
         </MudStack>
@@ -64,7 +64,7 @@
     {
         <MudAlert Severity="Severity.Error" Class="mb-2">@_passwordError</MudAlert>
     }
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="ChangePasswordAsync">Update password</MudButton>
+    <MudButton Variant="Variant.Outlined" Color="Color.Primary" FullWidth="true" OnClick="ChangePasswordAsync">Update password</MudButton>
 </MudPaper>
 
 @if (_biometricHwAvailable)

@@ -1,3 +1,4 @@
+using Journal.Components.Shared;
 using Journal.Services;
 using Journal.Services.Interfaces;
 using Microsoft.AspNetCore.Components;
@@ -16,6 +17,9 @@ namespace Journal.Components.Pages
 
         [Inject]
         private NavigationManager NavigationManager { get; set; } = default!;
+
+        [Inject]
+        private IDialogService DialogService { get; set; } = default!;
 
         private bool _hasAccount;
         private string _username = string.Empty;
@@ -140,6 +144,25 @@ namespace Journal.Components.Pages
             try
             {
                 await AuthService.SetupAsync(_username, _password);
+
+                if (await AuthService.IsBiometricAvailableAsync())
+                {
+                    var parameters = new DialogParameters
+                    {
+                        [nameof(ConfirmDialog.Title)] = "Enable fingerprint unlock?",
+                        [nameof(ConfirmDialog.Message)] = "You can unlock Journal with your fingerprint instead of typing your password every time.",
+                        [nameof(ConfirmDialog.ConfirmText)] = "Enable",
+                        [nameof(ConfirmDialog.Color)] = MudBlazor.Color.Success
+                    };
+                    var dialog = await DialogService.ShowAsync<ConfirmDialog>(string.Empty, parameters);
+                    var result = await dialog.Result;
+                    if (result is { Canceled: false })
+                    {
+                        NavigationManager.NavigateTo("settings?enableBiometric=true");
+                        return;
+                    }
+                }
+
                 NavigationManager.NavigateTo("");
             }
             finally

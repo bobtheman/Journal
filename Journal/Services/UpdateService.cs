@@ -7,7 +7,7 @@ namespace Journal.Services
     public class UpdateService : IUpdateService
     {
         // Public repo - the GitHub API is anonymously readable, no token needed.
-        private const string LatestReleaseUrl = "https://api.github.com/repos/bobtheman/Journal/releases/latest";
+        private const string LatestReleaseUrl = "https://api.github.com/repos/bobtheman/Journal/Releases/Latest";
 
         private readonly HttpClient _httpClient;
 

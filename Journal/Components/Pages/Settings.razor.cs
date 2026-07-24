@@ -34,6 +34,10 @@ namespace Journal.Components.Pages
         [Inject]
         private IUpdateService UpdateService { get; set; } = default!;
 
+        [Parameter]
+        [SupplyParameterFromQuery(Name = "enableBiometric")]
+        public bool EnableBiometricRequested { get; set; }
+
         private ThemeMode _themeMode;
 
         private bool _signedIn;
@@ -65,6 +69,11 @@ namespace Journal.Components.Pages
             _backupNotifications = SettingsService.BackupNotificationsEnabled;
             _biometricHwAvailable = await AuthService.IsBiometricAvailableAsync();
             _biometricEnabled = await AuthService.IsBiometricUnlockEnabledAsync();
+
+            if (EnableBiometricRequested && _biometricHwAvailable && !_biometricEnabled)
+            {
+                _showBiometricPasswordPrompt = true;
+            }
         }
 
         private async Task SignInAsync()
