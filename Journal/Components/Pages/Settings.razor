@@ -104,3 +104,29 @@
     <MudText Typo="Typo.body2" Class="mb-2">Permanently delete every journal entry on this device. This cannot be undone.</MudText>
     <MudButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true" OnClick="DeleteAllDataAsync" Disabled="_busy">Delete all data</MudButton>
 </MudPaper>
+
+<MudPaper Class="pa-4 mt-4" Elevation="2">
+    <MudText Typo="Typo.h6" Class="mb-2">App update</MudText>
+    <MudText Typo="Typo.caption" Class="d-block mb-3">
+        Current version: v@(AppInfo.Current.VersionString) (@AppInfo.Current.BuildString)
+    </MudText>
+
+    @if (_updateAvailable is not null)
+    {
+        <MudAlert Severity="Severity.Info" Class="mb-2">Version @_updateAvailable.Version is available.</MudAlert>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="InstallUpdateAsync" Disabled="_updateBusy">
+            @(_updateBusy ? $"Downloading... {_downloadProgress:P0}" : "Download and install")
+        </MudButton>
+    }
+    else
+    {
+        <MudButton Variant="Variant.Outlined" FullWidth="true" OnClick="CheckForUpdateAsync" Disabled="_updateBusy">
+            @(_updateBusy ? "Checking..." : "Check for updates")
+        </MudButton>
+    }
+
+    @if (!string.IsNullOrEmpty(_updateStatus))
+    {
+        <MudText Typo="Typo.caption" Class="mt-2 d-block">@_updateStatus</MudText>
+    }
+</MudPaper>

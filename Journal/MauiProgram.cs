@@ -26,6 +26,7 @@ namespace Journal
 
             builder.Services.AddSingleton(LoadGoogleAuthOptions());
             builder.Services.AddHttpClient<IGoogleDriveService, GoogleDriveService>();
+            builder.Services.AddHttpClient<IUpdateService, UpdateService>();
 
             builder.Services.AddSingleton(_ =>
                 new JournalDbContext(Path.Combine(FileSystem.AppDataDirectory, "journal.db3")));

@@ -1,4 +1,5 @@
 using Journal.Components.Shared;
+using Journal.Models;
 using Journal.Services;
 using Journal.Services.Interfaces;
 using Microsoft.AspNetCore.Components;
@@ -30,6 +31,9 @@ namespace Journal.Components.Pages
         [Inject]
         private IThemeService ThemeService { get; set; } = default!;
 
+        [Inject]
+        private IUpdateService UpdateService { get; set; } = default!;
+
         private ThemeMode _themeMode;
 
         private bool _signedIn;
@@ -48,6 +52,10 @@ namespace Journal.Components.Pages
         private string _biometricPassword = string.Empty;
         private string? _biometricError;
         private bool _showBiometricPassword;
+        private AppUpdateInfo? _updateAvailable;
+        private bool _updateBusy;
+        private string? _updateStatus;
+        private double _downloadProgress;
 
         protected override async Task OnInitializedAsync()
         {
@@ -262,6 +270,53 @@ namespace Journal.Components.Pages
             finally
             {
                 _busy = false;
+            }
+        }
+
+        private async Task CheckForUpdateAsync()
+        {
+            _updateBusy = true;
+            _updateStatus = null;
+            try
+            {
+                _updateAvailable = await UpdateService.CheckForUpdateAsync();
+                _updateStatus = _updateAvailable is null ? "You're up to date." : null;
+            }
+            catch (Exception ex)
+            {
+                _updateStatus = $"Update check failed: {ex.Message}";
+            }
+            finally
+            {
+                _updateBusy = false;
+            }
+        }
+
+        private async Task InstallUpdateAsync()
+        {
+            if (_updateAvailable is null)
+            {
+                return;
+            }
+
+            _updateBusy = true;
+            _updateStatus = null;
+            var progress = new Progress<double>(value =>
+            {
+                _downloadProgress = value;
+                StateHasChanged();
+            });
+            try
+            {
+                await UpdateService.DownloadAndInstallAsync(_updateAvailable, progress);
+            }
+            catch (Exception ex)
+            {
+                _updateStatus = $"Update failed: {ex.Message}";
+            }
+            finally
+            {
+                _updateBusy = false;
             }
         }
     }
