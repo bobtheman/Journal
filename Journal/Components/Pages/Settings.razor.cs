@@ -28,12 +28,13 @@ namespace Journal.Components.Pages
         private NavigationManager NavigationManager { get; set; } = default!;
 
         [Inject]
-        private ThemeService ThemeService { get; set; } = default!;
+        private IThemeService ThemeService { get; set; } = default!;
 
         private ThemeMode _themeMode;
 
         private bool _signedIn;
         private bool _autoSync;
+        private bool _backupNotifications;
         private bool _busy;
         private string? _status;
         private string _oldPassword = string.Empty;
@@ -53,6 +54,7 @@ namespace Journal.Components.Pages
             _themeMode = ThemeService.Mode;
             _signedIn = await GoogleDriveService.IsSignedInAsync();
             _autoSync = SettingsService.AutoSyncEnabled;
+            _backupNotifications = SettingsService.BackupNotificationsEnabled;
             _biometricHwAvailable = await AuthService.IsBiometricAvailableAsync();
             _biometricEnabled = await AuthService.IsBiometricUnlockEnabledAsync();
         }
@@ -137,6 +139,12 @@ namespace Journal.Components.Pages
         {
             _autoSync = value;
             SettingsService.AutoSyncEnabled = value;
+        }
+
+        private void OnBackupNotificationsChanged(bool value)
+        {
+            _backupNotifications = value;
+            SettingsService.BackupNotificationsEnabled = value;
         }
 
         private async Task ChangePasswordAsync()

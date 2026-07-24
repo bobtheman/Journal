@@ -1,6 +1,7 @@
 @using Journal.Services
+@using Journal.Services.Interfaces
 @implements IDisposable
-@inject ThemeService ThemeService
+@inject IThemeService ThemeService
 
 <MudThemeProvider @ref="_themeProvider" Theme="Layout.MainLayout.AppTheme" IsDarkMode="_isDarkMode"
                   IsDarkModeChanged="OnIsDarkModeChanged" ObserveSystemDarkModeChange="@(ThemeService.Mode == ThemeMode.System)" />

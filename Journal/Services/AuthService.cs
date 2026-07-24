@@ -14,7 +14,7 @@ namespace Journal.Services
         private const string BiometricPasswordKey = "auth_biometric_password";
 
         private readonly JournalDbContext _dbContext;
-        private readonly SessionState _sessionState;
+        private readonly ISessionState _sessionState;
 
         // The key used to open the current session's DB connection. Re-verifying a
         // password (biometric enable, change password) compares against this in memory
@@ -23,7 +23,7 @@ namespace Journal.Services
         // observed to accept a wrong key.
         private string? _currentKey;
 
-        public AuthService(JournalDbContext dbContext, SessionState sessionState)
+        public AuthService(JournalDbContext dbContext, ISessionState sessionState)
         {
             _dbContext = dbContext;
             _sessionState = sessionState;

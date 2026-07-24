@@ -29,8 +29,9 @@ namespace Journal
 
             builder.Services.AddSingleton(_ =>
                 new JournalDbContext(Path.Combine(FileSystem.AppDataDirectory, "journal.db3")));
-            builder.Services.AddSingleton<SessionState>();
-            builder.Services.AddSingleton<ThemeService>();
+            builder.Services.AddSingleton<ISessionState, SessionState>();
+            builder.Services.AddSingleton<IThemeService, ThemeService>();
+            builder.Services.AddSingleton<ISyncNotificationService, SyncNotificationService>();
             builder.Services.AddSingleton<IAuthService, AuthService>();
             builder.Services.AddSingleton<IJournalRepository, JournalRepository>();
             builder.Services.AddSingleton<ISettingsService, AppSettingsService>();

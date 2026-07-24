@@ -36,7 +36,7 @@ namespace Journal.Tests
         {
             var date = new DateTime(2026, 1, 15);
 
-            var entry = await _repository.UpsertAsync(date, "First day", "Started the journal.");
+            var entry = await _repository.UpsertAsync(date, "First day", "Started the journal.", null);
 
             Assert.NotEqual(0, entry.Id);
             Assert.Equal("First day", entry.Title);
@@ -47,8 +47,8 @@ namespace Journal.Tests
         {
             var date = new DateTime(2026, 1, 16);
 
-            await _repository.UpsertAsync(date, "Original", "Original content");
-            await _repository.UpsertAsync(date, "Updated", "Updated content");
+            await _repository.UpsertAsync(date, "Original", "Original content", null);
+            await _repository.UpsertAsync(date, "Updated", "Updated content", null);
 
             var stored = await _repository.GetByDateAsync(date);
             var all = await _repository.GetAllSummariesAsync();
@@ -69,7 +69,7 @@ namespace Journal.Tests
         public async Task DeleteAsync_ExistingEntry_RemovesIt()
         {
             var date = new DateTime(2026, 1, 20);
-            await _repository.UpsertAsync(date, "To delete", "content");
+            await _repository.UpsertAsync(date, "To delete", "content", null);
 
             await _repository.DeleteAsync(date);
 
@@ -80,8 +80,8 @@ namespace Journal.Tests
         [Fact]
         public async Task GetAllSummariesAsync_MultipleEntries_OrderedByDateDescending()
         {
-            await _repository.UpsertAsync(new DateTime(2026, 1, 1), "Old", "content");
-            await _repository.UpsertAsync(new DateTime(2026, 1, 5), "New", "content");
+            await _repository.UpsertAsync(new DateTime(2026, 1, 1), "Old", "content", null);
+            await _repository.UpsertAsync(new DateTime(2026, 1, 5), "New", "content", null);
 
             var summaries = await _repository.GetAllSummariesAsync();
 

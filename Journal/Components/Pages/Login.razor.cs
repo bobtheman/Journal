@@ -12,7 +12,7 @@ namespace Journal.Components.Pages
         private IAuthService AuthService { get; set; } = default!;
 
         [Inject]
-        private SessionState SessionState { get; set; } = default!;
+        private ISessionState SessionState { get; set; } = default!;
 
         [Inject]
         private NavigationManager NavigationManager { get; set; } = default!;

@@ -4,6 +4,8 @@ namespace Journal.Services.Interfaces
     {
         bool AutoSyncEnabled { get; set; }
 
+        bool BackupNotificationsEnabled { get; set; }
+
         DateTime? LastSyncUtc { get; set; }
     }
 }

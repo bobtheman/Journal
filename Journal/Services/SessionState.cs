@@ -1,6 +1,8 @@
+using Journal.Services.Interfaces;
+
 namespace Journal.Services
 {
-    public class SessionState
+    public class SessionState : ISessionState
     {
         public bool IsAuthenticated { get; private set; }
 

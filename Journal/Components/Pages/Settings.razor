@@ -19,6 +19,10 @@
     {
         <MudText Typo="Typo.body2" Class="mb-2">Signed in.</MudText>
         <MudSwitch T="bool" Value="_autoSync" ValueChanged="OnAutoSyncChanged" Color="Color.Primary" Label="Auto backup" />
+        @if (_autoSync)
+        {
+            <MudSwitch T="bool" Value="_backupNotifications" ValueChanged="OnBackupNotificationsChanged" Color="Color.Primary" Label="Notify when backup completes" />
+        }
         <MudText Typo="Typo.caption" Class="d-block mb-3">
             Last synced: @(SettingsService.LastSyncUtc?.ToLocalTime().ToString("g") ?? "never")
         </MudText>

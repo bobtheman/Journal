@@ -1,13 +1,8 @@
+using Journal.Services.Interfaces;
+
 namespace Journal.Services
 {
-    public enum ThemeMode
-    {
-        System,
-        Light,
-        Dark
-    }
-
-    public class ThemeService
+    public class ThemeService : IThemeService
     {
         private const string ThemeModeKey = "theme_mode";
 

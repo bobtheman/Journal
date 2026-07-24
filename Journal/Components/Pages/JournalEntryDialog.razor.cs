@@ -24,6 +24,9 @@ namespace Journal.Components.Pages
         private ISettingsService SettingsService { get; set; } = default!;
 
         [Inject]
+        private ISyncNotificationService SyncNotificationService { get; set; } = default!;
+
+        [Inject]
         private IDialogService DialogService { get; set; } = default!;
 
         [Inject]
@@ -85,6 +88,7 @@ namespace Journal.Components.Pages
                     if (await GoogleDriveService.IsSignedInAsync())
                     {
                         await GoogleDriveService.BackupAsync();
+                        SyncNotificationService.NotifyBackupCompleted();
                     }
                 }
                 catch (Exception)

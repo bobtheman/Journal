@@ -1,5 +1,4 @@
 using Journal.Models;
-using Journal.Services;
 using Journal.Services.Interfaces;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
@@ -12,7 +11,7 @@ namespace Journal.Components.Pages
         private IJournalRepository JournalRepository { get; set; } = default!;
 
         [Inject]
-        private SessionState SessionState { get; set; } = default!;
+        private ISessionState SessionState { get; set; } = default!;
 
         [Inject]
         private IDialogService DialogService { get; set; } = default!;
