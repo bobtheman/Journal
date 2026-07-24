@@ -85,4 +85,17 @@
       <Folder Include="Resources\Images\" />
     </ItemGroup>
 
+    <!-- Auto-increment ApplicationVersion for Release builds only -->
+    <Target Name="IncrementVersionForRelease" BeforeTargets="Build" Condition="'$(Configuration)' == 'Release'">
+        <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\Scripts\IncrementVersion.ps1&quot; -ProjectPath &quot;$(MSBuildProjectFullPath)&quot;" />
+    </Target>
+
+    <!-- Rename APK/AAB with version number for Release Android publishes -->
+    <Target Name="RenameAPKWithVersion" AfterTargets="Publish" Condition="'$(Configuration)' == 'Release' and $(TargetFramework.Contains('android'))">
+        <PropertyGroup>
+            <RenameScriptPath>$(MSBuildProjectDirectory)\..\Scripts\RenameAPK.ps1</RenameScriptPath>
+        </PropertyGroup>
+        <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(RenameScriptPath)&quot; -ProjectDir &quot;$(MSBuildProjectDirectory)&quot; -ApplicationDisplayVersion &quot;$(ApplicationDisplayVersion)&quot; -ApplicationVersion &quot;$(ApplicationVersion)&quot;" />
+    </Target>
+
 </Project>

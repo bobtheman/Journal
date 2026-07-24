@@ -1,7 +1,8 @@
 @page "/login"
 @layout LoginLayout
 
-<MudPaper Class="pa-8" Elevation="4" Style="width: 100%; max-width: 420px;">
+<MudStack AlignItems="AlignItems.Center" Style="width: 100%; max-width: 420px;">
+<MudPaper Class="pa-8" Elevation="4" Style="width: 100%;">
     <MudText Typo="Typo.h4" Class="mb-4" Align="Align.Center">Journal</MudText>
 
     @if (_hasAccount)
@@ -54,3 +55,8 @@
         </MudButton>
     }
 </MudPaper>
+
+<MudText Typo="Typo.caption" Class="mt-4 mud-text-secondary" Align="Align.Center">
+    v@(AppInfo.Current.VersionString) (@AppInfo.Current.BuildString)
+</MudText>
+</MudStack>
