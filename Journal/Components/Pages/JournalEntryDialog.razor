@@ -16,17 +16,21 @@
                 {
                     <MudIconButton Icon="@mood.Icon"
                                    Color="@(_mood == mood.Value ? mood.Color : Color.Default)"
+                                   Style="@(_mood == mood.Value && mood.Hex is not null ? $"color:{mood.Hex}" : null)"
                                    Size="Size.Large"
                                    title="@mood.Label"
                                    OnClick="@(() => _mood = mood.Value)" />
                 }
             </MudStack>
 
-            <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small" Class="mb-2">
-                <MudIconButton Icon="@Icons.Material.Filled.FormatBold" OnClick="@(() => WrapSelectionAsync("**", "**"))" title="Bold" />
-                <MudIconButton Icon="@Icons.Material.Filled.FormatItalic" OnClick="@(() => WrapSelectionAsync("_", "_"))" title="Italic" />
-                <MudIconButton Icon="@Icons.Material.Filled.FormatListBulleted" OnClick="InsertBulletAsync" title="Bullet point" />
-            </MudButtonGroup>
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
+                <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small">
+                    <MudIconButton Icon="@Icons.Material.Filled.FormatBold" OnClick="@(() => WrapSelectionAsync("**", "**"))" title="Bold" />
+                    <MudIconButton Icon="@Icons.Material.Filled.FormatItalic" OnClick="@(() => WrapSelectionAsync("_", "_"))" title="Italic" />
+                    <MudIconButton Icon="@Icons.Material.Filled.FormatListBulleted" OnClick="InsertBulletAsync" title="Bullet point" />
+                </MudButtonGroup>
+                <MudButton Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small" StartIcon="@Icons.Material.Filled.Check" OnClick="SaveAsync">Save</MudButton>
+            </MudStack>
 
             <textarea @ref="_contentRef" @bind="_content" @bind:event="oninput"
                       class="journal-textarea" rows="14" spellcheck="true"
@@ -36,6 +40,5 @@
     <DialogActions>
         <MudButton Color="Color.Error" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Delete" OnClick="DeleteAsync">Delete</MudButton>
         <MudButton Variant="Variant.Outlined" OnClick="Cancel">Cancel</MudButton>
-        <MudButton Color="Color.Primary" Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.Check" OnClick="SaveAsync">Save</MudButton>
     </DialogActions>
 </MudDialog>

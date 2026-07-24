@@ -36,7 +36,8 @@ else
                     </MudStack>
                     @if (summary.Mood.HasValue)
                     {
-                        <MudIcon Icon="@MoodIcons.GetIcon(summary.Mood.Value)" Color="@MoodIcons.GetColor(summary.Mood.Value)" Size="Size.Small" />
+                        <MudIcon Icon="@MoodIcons.GetIcon(summary.Mood.Value)" Color="@MoodIcons.GetColor(summary.Mood.Value)"
+                                 Style="@(MoodIcons.GetHex(summary.Mood.Value) is { } hex ? $"color:{hex}" : null)" Size="Size.Small" />
                     }
                 </MudStack>
             </MudListItem>
