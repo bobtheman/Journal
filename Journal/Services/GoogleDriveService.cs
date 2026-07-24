@@ -5,6 +5,7 @@ using Google.Apis.Services;
 using Journal.Data;
 using Journal.Models;
 using Journal.Services.Interfaces;
+using Microsoft.Maui.ApplicationModel;
 
 namespace Journal.Services
 {
@@ -43,14 +44,7 @@ namespace Journal.Services
             var verifier = PkceHelper.GenerateCodeVerifier();
             var challenge = PkceHelper.GenerateCodeChallenge(verifier);
             var redirectUri = GetRedirectUri();
-
-            var authUrl = "https://accounts.google.com/o/oauth2/v2/auth" +
-                $"?client_id={Uri.EscapeDataString(_options.AndroidClientId)}" +
-                $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
-                "&response_type=code" +
-                $"&scope={Uri.EscapeDataString(Scope)}" +
-                "&access_type=offline&prompt=consent" +
-                $"&code_challenge={challenge}&code_challenge_method=S256";
+            var authUrl = BuildAuthUrl(challenge, redirectUri);
 
             var code = await GetAuthorizationCodeViaLoopbackAsync(authUrl, redirectUri);
             if (string.IsNullOrEmpty(code))
@@ -68,24 +62,48 @@ namespace Journal.Services
             return true;
         }
 
+        private string BuildAuthUrl(string challenge, string redirectUri) =>
+            "https://accounts.google.com/o/oauth2/v2/auth" +
+            $"?client_id={Uri.EscapeDataString(_options.ClientId)}" +
+            $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
+            "&response_type=code" +
+            $"&scope={Uri.EscapeDataString(Scope)}" +
+            "&access_type=offline&prompt=consent" +
+            $"&code_challenge={challenge}&code_challenge_method=S256";
+
+        // Opens the auth page via Custom Tabs (Android) / SFSafariViewController (iOS, Mac
+        // Catalyst), which run as part of the app's own task. Once the local listener catches
+        // the redirect, we bring MainActivity back to the foreground on Android so the Custom
+        // Tab is dismissed automatically. On other platforms the user switches back manually.
         private static async Task<string?> GetAuthorizationCodeViaLoopbackAsync(string authUrl, string redirectUri)
         {
             using var listener = new System.Net.HttpListener();
             listener.Prefixes.Add(redirectUri);
             listener.Start();
 
-            await Launcher.Default.OpenAsync(new Uri(authUrl));
+            await Browser.Default.OpenAsync(new Uri(authUrl), BrowserLaunchMode.SystemPreferred);
 
             var context = await listener.GetContextAsync();
             var code = context.Request.QueryString["code"];
 
-            const string responseHtml = "<html><body>Signed in. You can close this tab and return to the Journal app.</body></html>";
+            const string responseHtml = "<html><body>Signed in. Returning to Journal...</body></html>";
             var buffer = System.Text.Encoding.UTF8.GetBytes(responseHtml);
             context.Response.ContentLength64 = buffer.Length;
             await context.Response.OutputStream.WriteAsync(buffer);
             context.Response.OutputStream.Close();
 
             listener.Stop();
+
+#if ANDROID
+            var activity = Platform.CurrentActivity;
+            if (activity is not null)
+            {
+                var intent = new Android.Content.Intent(activity, activity.GetType());
+                intent.SetFlags(Android.Content.ActivityFlags.ReorderToFront);
+                activity.StartActivity(intent);
+            }
+#endif
+
             return code;
         }
 
@@ -185,7 +203,8 @@ namespace Journal.Services
             var form = new Dictionary<string, string>
             {
                 ["code"] = code,
-                ["client_id"] = _options.AndroidClientId,
+                ["client_id"] = _options.ClientId,
+                ["client_secret"] = _options.ClientSecret,
                 ["redirect_uri"] = redirectUri,
                 ["grant_type"] = "authorization_code",
                 ["code_verifier"] = codeVerifier
@@ -220,7 +239,8 @@ namespace Journal.Services
             var form = new Dictionary<string, string>
             {
                 ["refresh_token"] = tokens.RefreshToken,
-                ["client_id"] = _options.AndroidClientId,
+                ["client_id"] = _options.ClientId,
+                ["client_secret"] = _options.ClientSecret,
                 ["grant_type"] = "refresh_token"
             };
 

@@ -1,0 +1,18 @@
+.journal-month-header {
+    padding: 0.5rem 1rem 0.125rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: normal;
+    line-height: 1.2;
+}
+
+.journal-day-badge {
+    min-width: 3.25rem;
+}
+
+.journal-list ::deep .journal-entry-item.mud-list-item {
+    padding-top: 0.35rem;
+    padding-bottom: 0.35rem;
+    min-height: 0;
+}

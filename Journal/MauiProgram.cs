@@ -51,7 +51,8 @@ namespace Journal
 
             return new GoogleAuthOptions
             {
-                AndroidClientId = google.GetProperty("AndroidClientId").GetString() ?? string.Empty
+                ClientId = google.GetProperty("ClientId").GetString() ?? string.Empty,
+                ClientSecret = google.GetProperty("ClientSecret").GetString() ?? string.Empty
             };
         }
     }

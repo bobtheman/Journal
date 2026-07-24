@@ -11,20 +11,35 @@
     <MudDatePicker Label="Date" Date="_selectedDate" DateChanged="OnDateChanged" DateFormat="dddd, dd MMMM yyyy" MaxDate="DateTime.Today" />
 </MudPaper>
 
-<MudList T="DateTime">
-    @foreach (var summary in _summaries)
-    {
-        <MudListItem T="DateTime" OnClick="@(() => OpenEntryAsync(summary.EntryDate))">
-            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
-                <MudStack Spacing="0">
-                    <MudText Typo="Typo.body1">@(summary.Title == string.Empty ? summary.EntryDate.ToString("d MMM yyyy") : summary.Title)</MudText>
-                    <MudText Typo="Typo.caption">@summary.EntryDate.ToString("d MMM yyyy")</MudText>
+@if (_summaries.Count == 0)
+{
+    <MudText Typo="Typo.body2" Class="mud-text-secondary pa-4" Align="Align.Center">No entries yet.</MudText>
+}
+else
+{
+    string? lastPeriod = null;
+
+    <MudList T="DateTime" Dense="true" Class="journal-list">
+        @foreach (var summary in _summaries)
+        {
+            var period = summary.EntryDate.ToString("MMMM yyyy");
+            if (period != lastPeriod)
+            {
+                lastPeriod = period;
+                <MudListSubheader Class="journal-month-header">@period</MudListSubheader>
+            }
+            <MudListItem T="DateTime" OnClick="@(() => OpenEntryAsync(summary.EntryDate))" Class="journal-entry-item">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        <MudText Typo="Typo.body2" Class="journal-day-badge mud-text-secondary">@summary.EntryDate.ToString("dd ddd")</MudText>
+                        <MudText Typo="Typo.body1">@(summary.Title == string.Empty ? summary.EntryDate.ToString("d MMM yyyy") : summary.Title)</MudText>
+                    </MudStack>
+                    @if (summary.Mood.HasValue)
+                    {
+                        <MudIcon Icon="@MoodIcons.GetIcon(summary.Mood.Value)" Color="@MoodIcons.GetColor(summary.Mood.Value)" Size="Size.Small" />
+                    }
                 </MudStack>
-                @if (summary.Mood.HasValue)
-                {
-                    <MudIcon Icon="@MoodIcons.GetIcon(summary.Mood.Value)" Color="@MoodIcons.GetColor(summary.Mood.Value)" />
-                }
-            </MudStack>
-        </MudListItem>
-    }
-</MudList>
+            </MudListItem>
+        }
+    </MudList>
+}

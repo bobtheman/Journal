@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using Journal.Data;
 using Journal.Services.Interfaces;
 using Plugin.Maui.Biometric;
@@ -13,6 +15,13 @@ namespace Journal.Services
 
         private readonly JournalDbContext _dbContext;
         private readonly SessionState _sessionState;
+
+        // The key used to open the current session's DB connection. Re-verifying a
+        // password (biometric enable, change password) compares against this in memory
+        // instead of opening a second SQLCipher connection to the same file - opening two
+        // connections to the same encrypted DB in one process is unreliable and was
+        // observed to accept a wrong key.
+        private string? _currentKey;
 
         public AuthService(JournalDbContext dbContext, SessionState sessionState)
         {
@@ -34,6 +43,7 @@ namespace Journal.Services
             Preferences.Default.Set(UsernameKey, username);
 
             await _dbContext.OpenAsync(key);
+            _currentKey = key;
             _sessionState.SetAuthenticated(true);
         }
 
@@ -51,6 +61,7 @@ namespace Journal.Services
             try
             {
                 await _dbContext.OpenAsync(key);
+                _currentKey = key;
                 _sessionState.SetAuthenticated(true);
                 return true;
             }
@@ -62,20 +73,7 @@ namespace Journal.Services
 
         public async Task<bool> ChangePasswordAsync(string oldPassword, string newPassword)
         {
-            var saltHex = Preferences.Default.Get(SaltKey, string.Empty);
-            if (string.IsNullOrEmpty(saltHex))
-            {
-                return false;
-            }
-
-            var salt = Convert.FromHexString(saltHex);
-            var oldKey = PasswordKeyDerivation.DeriveKeyHex(oldPassword, salt);
-
-            try
-            {
-                await _dbContext.OpenAsync(oldKey);
-            }
-            catch (SQLiteException)
+            if (!VerifyCurrentPassword(oldPassword))
             {
                 return false;
             }
@@ -85,13 +83,38 @@ namespace Journal.Services
 
             await _dbContext.RekeyAsync(newKey);
             Preferences.Default.Set(SaltKey, Convert.ToHexString(newSalt));
+            _currentKey = newKey;
             return true;
         }
 
         public async Task LogoutAsync()
         {
             await _dbContext.CloseAsync();
+            _currentKey = null;
             _sessionState.SetAuthenticated(false);
+        }
+
+        // Compares against the key already used to open the live session connection,
+        // rather than re-deriving trust from the database itself.
+        private bool VerifyCurrentPassword(string password)
+        {
+            if (_currentKey is null)
+            {
+                return false;
+            }
+
+            var saltHex = Preferences.Default.Get(SaltKey, string.Empty);
+            if (string.IsNullOrEmpty(saltHex))
+            {
+                return false;
+            }
+
+            var salt = Convert.FromHexString(saltHex);
+            var candidateKey = PasswordKeyDerivation.DeriveKeyHex(password, salt);
+
+            return CryptographicOperations.FixedTimeEquals(
+                Encoding.UTF8.GetBytes(candidateKey),
+                Encoding.UTF8.GetBytes(_currentKey));
         }
 
         public async Task<bool> IsBiometricAvailableAsync()
@@ -108,8 +131,7 @@ namespace Journal.Services
 
         public async Task<bool> EnableBiometricUnlockAsync(string password)
         {
-            var verified = await LoginAsync(password);
-            if (!verified)
+            if (!VerifyCurrentPassword(password))
             {
                 return false;
             }

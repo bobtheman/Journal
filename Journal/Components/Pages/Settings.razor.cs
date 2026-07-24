@@ -46,6 +46,7 @@ namespace Journal.Components.Pages
         private bool _showBiometricPasswordPrompt;
         private string _biometricPassword = string.Empty;
         private string? _biometricError;
+        private bool _showBiometricPassword;
 
         protected override async Task OnInitializedAsync()
         {
@@ -73,6 +74,19 @@ namespace Journal.Components.Pages
 
         private async Task SignOutAsync()
         {
+            var parameters = new DialogParameters
+            {
+                [nameof(ConfirmDialog.Title)] = "Sign out of Google Drive?",
+                [nameof(ConfirmDialog.Message)] = "You'll need to sign in again to backup or restore.",
+                [nameof(ConfirmDialog.ConfirmText)] = "Sign out"
+            };
+            var dialog = await DialogService.ShowAsync<ConfirmDialog>(string.Empty, parameters);
+            var result = await dialog.Result;
+            if (result is null || result.Canceled)
+            {
+                return;
+            }
+
             await GoogleDriveService.SignOutAsync();
             _signedIn = false;
         }
@@ -155,6 +169,7 @@ namespace Journal.Components.Pages
             await AuthService.DisableBiometricUnlockAsync();
             _biometricEnabled = false;
             _showBiometricPasswordPrompt = false;
+            _showBiometricPassword = false;
         }
 
         private async Task OnBiometricPasswordKeyUp(KeyboardEventArgs args)
@@ -178,6 +193,7 @@ namespace Journal.Components.Pages
 
             _biometricEnabled = true;
             _showBiometricPasswordPrompt = false;
+            _showBiometricPassword = false;
             _biometricError = null;
         }
 
@@ -185,6 +201,7 @@ namespace Journal.Components.Pages
         {
             _biometricPassword = string.Empty;
             _showBiometricPasswordPrompt = false;
+            _showBiometricPassword = false;
             _biometricError = null;
         }
 

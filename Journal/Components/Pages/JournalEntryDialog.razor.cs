@@ -18,6 +18,12 @@ namespace Journal.Components.Pages
         private IJournalRepository JournalRepository { get; set; } = default!;
 
         [Inject]
+        private IGoogleDriveService GoogleDriveService { get; set; } = default!;
+
+        [Inject]
+        private ISettingsService SettingsService { get; set; } = default!;
+
+        [Inject]
         private IDialogService DialogService { get; set; } = default!;
 
         [Inject]
@@ -39,6 +45,7 @@ namespace Journal.Components.Pages
         private async Task SaveAsync()
         {
             await JournalRepository.UpsertAsync(Date, _title, _content, _mood);
+            TriggerAutoSync();
             MudDialog.Close(DialogResult.Ok(true));
         }
 
@@ -58,7 +65,33 @@ namespace Journal.Components.Pages
             }
 
             await JournalRepository.DeleteAsync(Date);
+            TriggerAutoSync();
             MudDialog.Close(DialogResult.Ok(true));
+        }
+
+        // Fire-and-forget: auto backup shouldn't make the user wait on a network round trip
+        // just to close the entry dialog, and a failed background sync isn't worth surfacing.
+        private void TriggerAutoSync()
+        {
+            if (!SettingsService.AutoSyncEnabled)
+            {
+                return;
+            }
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    if (await GoogleDriveService.IsSignedInAsync())
+                    {
+                        await GoogleDriveService.BackupAsync();
+                    }
+                }
+                catch (Exception)
+                {
+                    // Best-effort background sync; the user can always "Backup now" manually.
+                }
+            });
         }
 
         private void Cancel()
