@@ -9,7 +9,7 @@
     <DialogContent>
         <MudContainer MaxWidth="MaxWidth.Small" Class="pa-0">
             <MudTextField T="string" Label="Title" @bind-Value="_title" Variant="Variant.Outlined"
-                          spellcheck="true" Class="mb-4" />
+                          spellcheck="true" autocorrect="on" autocapitalize="sentences" Class="mb-4" />
 
             <MudStack Row="true" Justify="Justify.Center" Spacing="1" Class="mb-4">
                 @foreach (var mood in MoodIcons.All)
@@ -33,7 +33,7 @@
             </MudStack>
 
             <textarea @ref="_contentRef" @bind="_content" @bind:event="oninput"
-                      class="journal-textarea" rows="14" spellcheck="true"
+                      class="journal-textarea" rows="14" spellcheck="true" autocorrect="on" autocapitalize="sentences"
                       placeholder="What happened today?"></textarea>
         </MudContainer>
     </DialogContent>
