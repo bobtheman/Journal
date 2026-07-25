@@ -14,6 +14,11 @@ namespace Journal.Services.Interfaces
 
         Task LogoutAsync();
 
+        // Wipes the database file plus every local preference/secure-storage value
+        // (account credentials, biometric secret, Google tokens, app settings) and
+        // logs the session out - a full local reset, not just clearing journal entries.
+        Task DeleteAllLocalDataAsync();
+
         Task<bool> IsBiometricAvailableAsync();
 
         Task<bool> IsBiometricUnlockEnabledAsync();

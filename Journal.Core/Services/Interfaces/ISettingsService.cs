@@ -6,6 +6,8 @@ namespace Journal.Services.Interfaces
 
         bool BackupNotificationsEnabled { get; set; }
 
+        bool WifiOnlyBackup { get; set; }
+
         DateTime? LastSyncUtc { get; set; }
     }
 }

@@ -6,6 +6,7 @@ namespace Journal.Services
     {
         private const string AutoSyncKey = "auto_sync_enabled";
         private const string BackupNotificationsKey = "backup_notifications_enabled";
+        private const string WifiOnlyBackupKey = "wifi_only_backup";
         private const string LastSyncKey = "last_sync_utc";
 
         public bool AutoSyncEnabled
@@ -18,6 +19,12 @@ namespace Journal.Services
         {
             get => Preferences.Default.Get(BackupNotificationsKey, true);
             set => Preferences.Default.Set(BackupNotificationsKey, value);
+        }
+
+        public bool WifiOnlyBackup
+        {
+            get => Preferences.Default.Get(WifiOnlyBackupKey, false);
+            set => Preferences.Default.Set(WifiOnlyBackupKey, value);
         }
 
         public DateTime? LastSyncUtc

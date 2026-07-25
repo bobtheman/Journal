@@ -22,6 +22,7 @@
         @if (_autoSync)
         {
             <MudSwitch T="bool" Value="_backupNotifications" ValueChanged="OnBackupNotificationsChanged" Color="Color.Primary" Label="Notify when backup completes" />
+            <MudSwitch T="bool" Value="_wifiOnlyBackup" ValueChanged="OnWifiOnlyBackupChanged" Color="Color.Primary" Label="Wi-Fi only" />
         }
         <MudText Typo="Typo.caption" Class="d-block mb-3">
             Last synced: @(SettingsService.LastSyncUtc?.ToLocalTime().ToString("g") ?? "never")
@@ -53,13 +54,15 @@
                   AdornmentIcon="@(_showOldPassword ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
                   OnAdornmentClick="@(() => _showOldPassword = !_showOldPassword)"
                   Class="mb-2" />
-    <MudTextField T="string" Label="New password" @bind-Value="_newPassword"
-                  InputType="@(_showNewPassword ? InputType.Text : InputType.Password)"
-                  Adornment="Adornment.End"
-                  AdornmentIcon="@(_showNewPassword ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
-                  OnAdornmentClick="@(() => _showNewPassword = !_showNewPassword)"
-                  HelperText="At least 8 characters, with upper, lower, number and special character."
-                  Class="mb-2" />
+    <MudStack Row="true" AlignItems="AlignItems.End" Spacing="1" Class="mb-2">
+        <MudTextField T="string" Label="New password" @bind-Value="_newPassword"
+                      InputType="@(_showNewPassword ? InputType.Text : InputType.Password)"
+                      Adornment="Adornment.End"
+                      AdornmentIcon="@(_showNewPassword ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
+                      OnAdornmentClick="@(() => _showNewPassword = !_showNewPassword)"
+                      Class="flex-grow-1" />
+        <MudIconButton Icon="@Icons.Material.Outlined.Info" Size="Size.Small" OnClick="ShowPasswordRequirementsAsync" title="Password requirements" />
+    </MudStack>
     @if (!string.IsNullOrEmpty(_passwordError))
     {
         <MudAlert Severity="Severity.Error" Class="mb-2">@_passwordError</MudAlert>

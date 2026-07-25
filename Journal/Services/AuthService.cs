@@ -94,6 +94,21 @@ namespace Journal.Services
             _sessionState.SetAuthenticated(false);
         }
 
+        public async Task DeleteAllLocalDataAsync()
+        {
+            await _dbContext.CloseAsync();
+            if (File.Exists(_dbContext.DbPath))
+            {
+                File.Delete(_dbContext.DbPath);
+            }
+
+            Preferences.Default.Clear();
+            SecureStorage.Default.RemoveAll();
+
+            _currentKey = null;
+            _sessionState.SetAuthenticated(false);
+        }
+
         // Compares against the key already used to open the live session connection,
         // rather than re-deriving trust from the database itself.
         private bool VerifyCurrentPassword(string password)

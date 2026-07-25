@@ -3,13 +3,8 @@
 
 <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-4">
     <MudText Typo="Typo.h4"></MudText>
-    <MudIconButton Icon="@(_selectedDateHasEntry ? Icons.Material.Filled.Edit : Icons.Material.Filled.Add)"
-                   Color="Color.Primary" Variant="Variant.Filled" OnClick="AddEntryAsync" />
+    <MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Primary" Variant="Variant.Filled" OnClick="AddEntryAsync" />
 </MudStack>
-
-<MudPaper Class="@($"pa-4 mb-4 selected-day-card {(_selectedDateHasEntry ? "selected-day-card--has-entry" : "")}")" Elevation="0">
-    <MudDatePicker Label="Date" Date="_selectedDate" DateChanged="OnDateChanged" DateFormat="dddd, dd MMMM yyyy" MaxDate="DateTime.Today" />
-</MudPaper>
 
 @if (_summaries.Count == 0)
 {
@@ -31,7 +26,7 @@ else
             <MudListItem T="DateTime" OnClick="@(() => OpenEntryAsync(summary.EntryDate))" Class="journal-entry-item">
                 <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
                     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                        <MudText Typo="Typo.body2" Class="journal-day-badge mud-text-secondary">@summary.EntryDate.ToString("dd ddd")</MudText>
+                        <MudText Typo="Typo.body2" Color="Color.Primary" Class="journal-day-badge">@summary.EntryDate.ToString("dd/MM/yyyy")</MudText>
                         <MudText Typo="Typo.body1">@(summary.Title == string.Empty ? summary.EntryDate.ToString("d MMM yyyy") : summary.Title)</MudText>
                     </MudStack>
                     @if (summary.Mood.HasValue)

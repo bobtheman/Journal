@@ -8,7 +8,8 @@
 }
 
 .journal-day-badge {
-    min-width: 3.25rem;
+    min-width: 5.5rem;
+    font-weight: 700;
 }
 
 .journal-list ::deep .journal-entry-item.mud-list-item {

@@ -89,22 +89,6 @@ h1:focus {
     text-align: start;
 }
 
-.selected-day-card {
-    background-color: transparent;
-    border-radius: 8px;
-    transition: background-color 150ms ease-in-out;
-}
-
-.selected-day-card--has-entry {
-    background-color: rgba(76, 95, 213, 0.12);
-}
-
-@media (prefers-color-scheme: dark) {
-    .selected-day-card--has-entry {
-        background-color: rgba(139, 156, 255, 0.18);
-    }
-}
-
 .journal-entry-dialog .mud-dialog-actions {
     justify-content: center;
     padding: 16px;

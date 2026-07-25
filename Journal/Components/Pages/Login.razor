@@ -33,13 +33,16 @@
     {
         <MudText Typo="Typo.body2" Class="mb-4" Align="Align.Center">Create your local account</MudText>
         <MudTextField T="string" Label="Username" @bind-Value="_username" Class="mb-2" />
-        <MudTextField T="string" Label="Password" @bind-Value="_password"
-                      InputType="@(_showPassword ? InputType.Text : InputType.Password)"
-                      Adornment="Adornment.End"
-                      AdornmentIcon="@(_showPassword ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
-                      OnAdornmentClick="@(() => _showPassword = !_showPassword)"
-                      HelperText="@(_error is not null ? "At least 8 characters, with upper, lower, number and special character." : null)"
-                      Immediate="true" OnKeyUp="OnSetupKeyUp" Class="mb-2" />
+        <MudStack Row="true" AlignItems="AlignItems.End" Spacing="1" Class="mb-2">
+            <MudTextField T="string" Label="Password" @bind-Value="_password"
+                          InputType="@(_showPassword ? InputType.Text : InputType.Password)"
+                          Adornment="Adornment.End"
+                          AdornmentIcon="@(_showPassword ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
+                          OnAdornmentClick="@(() => _showPassword = !_showPassword)"
+                          HelperText="@(_error is not null ? "At least 8 characters, with upper, lower, number and special character." : null)"
+                          Immediate="true" OnKeyUp="OnSetupKeyUp" Class="flex-grow-1" />
+@*             <MudIconButton Icon="@Icons.Material.Outlined.Info" Size="Size.Small" OnClick="ShowPasswordRequirementsAsync" title="Password requirements" /> *@
+        </MudStack>
         <MudTextField T="string" Label="Confirm password" @bind-Value="_confirmPassword"
                       InputType="@(_showConfirmPassword ? InputType.Text : InputType.Password)"
                       Adornment="Adornment.End"

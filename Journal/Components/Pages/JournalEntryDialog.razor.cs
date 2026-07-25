@@ -12,7 +12,7 @@ namespace Journal.Components.Pages
         private IMudDialogInstance MudDialog { get; set; } = default!;
 
         [Parameter]
-        public DateTime Date { get; set; }
+        public DateTime? Date { get; set; }
 
         [Inject]
         private IJournalRepository JournalRepository { get; set; } = default!;
@@ -35,25 +35,61 @@ namespace Journal.Components.Pages
         private string _title = string.Empty;
         private string _content = string.Empty;
         private int? _mood;
+        private bool _entryExists;
         private ElementReference _contentRef;
 
         protected override async Task OnInitializedAsync()
         {
-            var entry = await JournalRepository.GetByDateAsync(Date);
+            if (Date.HasValue)
+            {
+                await LoadEntryForDateAsync(Date.Value);
+            }
+        }
+
+        private async Task LoadEntryForDateAsync(DateTime date)
+        {
+            var entry = await JournalRepository.GetByDateAsync(date);
+            _entryExists = entry is not null;
             _title = entry?.Title ?? string.Empty;
             _content = entry?.Content ?? string.Empty;
             _mood = entry?.Mood;
         }
 
+        private async Task OnDateChanged(DateTime? date)
+        {
+            Date = date;
+            if (date.HasValue)
+            {
+                await LoadEntryForDateAsync(date.Value);
+            }
+            else
+            {
+                _entryExists = false;
+                _title = string.Empty;
+                _content = string.Empty;
+                _mood = null;
+            }
+        }
+
         private async Task SaveAsync()
         {
-            await JournalRepository.UpsertAsync(Date, _title, _content, _mood);
+            if (!Date.HasValue)
+            {
+                return;
+            }
+
+            await JournalRepository.UpsertAsync(Date.Value, _title, _content, _mood);
             TriggerAutoSync();
             MudDialog.Close(DialogResult.Ok(true));
         }
 
         private async Task DeleteAsync()
         {
+            if (!Date.HasValue)
+            {
+                return;
+            }
+
             var parameters = new DialogParameters
             {
                 [nameof(ConfirmDialog.Title)] = "Delete entry?",
@@ -67,7 +103,7 @@ namespace Journal.Components.Pages
                 return;
             }
 
-            await JournalRepository.DeleteAsync(Date);
+            await JournalRepository.DeleteAsync(Date.Value);
             TriggerAutoSync();
             MudDialog.Close(DialogResult.Ok(true));
         }
@@ -77,6 +113,11 @@ namespace Journal.Components.Pages
         private void TriggerAutoSync()
         {
             if (!SettingsService.AutoSyncEnabled)
+            {
+                return;
+            }
+
+            if (SettingsService.WifiOnlyBackup && !Connectivity.Current.ConnectionProfiles.Contains(ConnectionProfile.WiFi))
             {
                 return;
             }

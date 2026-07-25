@@ -16,11 +16,7 @@ namespace Journal.Components.Pages
         [Inject]
         private IDialogService DialogService { get; set; } = default!;
 
-        private DateTime? _selectedDate = DateTime.Today;
         private List<JournalEntrySummary> _summaries = [];
-
-        private bool _selectedDateHasEntry =>
-            _selectedDate is not null && _summaries.Any(s => s.EntryDate.Date == _selectedDate.Value.Date);
 
         protected override async Task OnInitializedAsync()
         {
@@ -38,17 +34,12 @@ namespace Journal.Components.Pages
             _summaries = await JournalRepository.GetAllSummariesAsync();
         }
 
-        private void OnDateChanged(DateTime? date)
-        {
-            _selectedDate = date;
-        }
-
         private async Task AddEntryAsync()
         {
-            await OpenEntryAsync(_selectedDate ?? DateTime.Today);
+            await OpenEntryAsync(null);
         }
 
-        private async Task OpenEntryAsync(DateTime date)
+        private async Task OpenEntryAsync(DateTime? date)
         {
             var options = new DialogOptions { FullScreen = true, CloseButton = false };
             var dialog = await DialogService.ShowAsync<JournalEntryDialog>(

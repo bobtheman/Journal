@@ -20,9 +20,6 @@ namespace Journal.Components.Pages
         private IAuthService AuthService { get; set; } = default!;
 
         [Inject]
-        private IJournalRepository JournalRepository { get; set; } = default!;
-
-        [Inject]
         private IDialogService DialogService { get; set; } = default!;
 
         [Inject]
@@ -43,6 +40,7 @@ namespace Journal.Components.Pages
         private bool _signedIn;
         private bool _autoSync;
         private bool _backupNotifications;
+        private bool _wifiOnlyBackup;
         private bool _busy;
         private string? _status;
         private string _oldPassword = string.Empty;
@@ -67,6 +65,7 @@ namespace Journal.Components.Pages
             _signedIn = await GoogleDriveService.IsSignedInAsync();
             _autoSync = SettingsService.AutoSyncEnabled;
             _backupNotifications = SettingsService.BackupNotificationsEnabled;
+            _wifiOnlyBackup = SettingsService.WifiOnlyBackup;
             _biometricHwAvailable = await AuthService.IsBiometricAvailableAsync();
             _biometricEnabled = await AuthService.IsBiometricUnlockEnabledAsync();
 
@@ -162,6 +161,17 @@ namespace Journal.Components.Pages
         {
             _backupNotifications = value;
             SettingsService.BackupNotificationsEnabled = value;
+        }
+
+        private void OnWifiOnlyBackupChanged(bool value)
+        {
+            _wifiOnlyBackup = value;
+            SettingsService.WifiOnlyBackup = value;
+        }
+
+        private async Task ShowPasswordRequirementsAsync()
+        {
+            await DialogService.ShowAsync<PasswordRequirementsDialog>(string.Empty);
         }
 
         private async Task ChangePasswordAsync()
@@ -260,7 +270,7 @@ namespace Journal.Components.Pages
             var parameters = new DialogParameters
             {
                 [nameof(ConfirmDialog.Title)] = "Delete all data?",
-                [nameof(ConfirmDialog.Message)] = "This will permanently delete every journal entry on this device. This cannot be undone.",
+                [nameof(ConfirmDialog.Message)] = "This will permanently delete your account and every journal entry on this device. This cannot be undone.",
                 [nameof(ConfirmDialog.ConfirmText)] = "Delete everything"
             };
             var dialog = await DialogService.ShowAsync<ConfirmDialog>(string.Empty, parameters);
@@ -273,8 +283,8 @@ namespace Journal.Components.Pages
             _busy = true;
             try
             {
-                await JournalRepository.DeleteAllAsync();
-                _status = "All journal entries deleted.";
+                await AuthService.DeleteAllLocalDataAsync();
+                NavigationManager.NavigateTo("login");
             }
             finally
             {

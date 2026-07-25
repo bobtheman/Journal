@@ -109,6 +109,11 @@ namespace Journal.Components.Pages
             }
         }
 
+        private async Task ShowPasswordRequirementsAsync()
+        {
+            await DialogService.ShowAsync<PasswordRequirementsDialog>(string.Empty);
+        }
+
         private async Task OnSetupKeyUp(KeyboardEventArgs args)
         {
             if (args.Key == "Enter")
