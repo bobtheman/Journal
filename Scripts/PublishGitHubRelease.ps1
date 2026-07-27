@@ -1,8 +1,9 @@
 <#
 .SYNOPSIS
-Publishes the freshly-built signed Release APK as a GitHub Release, tagged with the
-app's ApplicationVersion. The in-app "Check for updates" feature compares its own
-AppInfo.Current.BuildString against the latest release's tag on this repo.
+Publishes the freshly-built signed Release APK by committing it into
+Journal/Releases/Latest/ in this repo. The in-app "Check for updates" feature reads
+that folder's file listing via the GitHub Contents API and parses the build number out
+of the filename (e.g. "Journal_1_0_6.apk" -> build 6) - it does NOT use GitHub Releases.
 
 .EXAMPLE
 dotnet publish Journal/Journal.csproj -f net10.0-android -c Release
@@ -10,7 +11,8 @@ powershell -File Scripts/PublishGitHubRelease.ps1
 #>
 param(
     [string]$ProjectPath = "$PSScriptRoot\..\Journal\Journal.csproj",
-    [string]$Repo = "bobtheman/Journal"
+    [string]$RepoRoot = "$PSScriptRoot\..",
+    [string]$LatestFolder = "Journal\Releases\Latest"
 )
 
 [xml]$xml = Get-Content $ProjectPath -Encoding UTF8
@@ -21,28 +23,46 @@ if (-not $versionNode) {
 }
 
 $appVersion = $versionNode.ApplicationVersion.Trim()
-$displayVersion = $versionNode.ApplicationDisplayVersion.Trim()
-$tag = "v$appVersion"
 
 $publishDir = Join-Path (Split-Path $ProjectPath) "bin\Release\net10.0-android\publish"
-$apk = Get-ChildItem -Path $publishDir -Filter "Journal_*.apk" -ErrorAction SilentlyContinue | Select-Object -First 1
+$apk = Get-ChildItem -Path $publishDir -Filter "Journal_*.apk" -ErrorAction SilentlyContinue |
+    Sort-Object LastWriteTime -Descending | Select-Object -First 1
 
 if (-not $apk) {
     Write-Error "No Journal_*.apk found in $publishDir. Run 'dotnet publish -f net10.0-android -c Release' first."
     exit 1
 }
 
-Write-Host "Publishing $($apk.Name) as GitHub release $tag on $Repo..." -ForegroundColor Yellow
-
-gh release create $tag $apk.FullName `
-    --repo $Repo `
-    --title "Journal $displayVersion (build $appVersion)" `
-    --notes "Automated release for build $appVersion."
-
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "gh release create failed."
-    exit 1
+$destFolder = Join-Path $RepoRoot $LatestFolder
+if (-not (Test-Path $destFolder)) {
+    New-Item -ItemType Directory -Path $destFolder -Force | Out-Null
 }
 
-Write-Host "Release $tag published." -ForegroundColor Green
+Write-Host "Removing older APKs from $LatestFolder..." -ForegroundColor Yellow
+Get-ChildItem -Path $destFolder -Filter "*.apk" -ErrorAction SilentlyContinue | Remove-Item -Force
+
+$destPath = Join-Path $destFolder $apk.Name
+Write-Host "Copying $($apk.Name) (build $appVersion) into $LatestFolder..." -ForegroundColor Yellow
+Copy-Item -Path $apk.FullName -Destination $destPath -Force
+
+Push-Location $RepoRoot
+try {
+    git add -- "$LatestFolder"
+    git commit -m "Publish Journal build $appVersion"
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "git commit failed."
+        exit 1
+    }
+
+    git push
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "git push failed."
+        exit 1
+    }
+}
+finally {
+    Pop-Location
+}
+
+Write-Host "Build $appVersion published to $LatestFolder and pushed." -ForegroundColor Green
 exit 0

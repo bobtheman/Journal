@@ -73,6 +73,7 @@
     <ProjectReference Include="..\Journal.Core\Journal.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Releases\Latest\" />
     <Folder Include="Resources\Images\" />
   </ItemGroup>
   <!-- Auto-increment ApplicationVersion for Release builds only -->
