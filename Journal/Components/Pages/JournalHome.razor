@@ -7,7 +7,10 @@
 
 @if (_summaries.Count == 0)
 {
-    <MudText Typo="Typo.body2" Class="mud-text-secondary pa-4" Align="Align.Center">No entries yet.</MudText>
+    <MudStack AlignItems="AlignItems.Center" Class="pa-4" Spacing="3">
+        <MudText Typo="Typo.body2" Class="mud-text-secondary" Align="Align.Center">No entries yet.</MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="AddEntryAsync">Write your first entry</MudButton>
+    </MudStack>
 }
 else
 {

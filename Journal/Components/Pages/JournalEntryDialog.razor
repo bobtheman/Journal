@@ -23,7 +23,7 @@
                                    Style="@(_mood == mood.Value && mood.Hex is not null ? $"color:{mood.Hex}" : null)"
                                    Size="Size.Large"
                                    title="@mood.Label"
-                                   OnClick="@(() => _mood = mood.Value)" />
+                                   OnClick="@(() => _mood = _mood == mood.Value ? null : mood.Value)" />
                 }
             </MudStack>
 

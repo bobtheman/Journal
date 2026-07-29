@@ -38,6 +38,12 @@ namespace Journal.Components.Pages
         private bool _entryExists;
         private ElementReference _contentRef;
 
+        private string _loadedTitle = string.Empty;
+        private string _loadedContent = string.Empty;
+        private int? _loadedMood;
+
+        private bool IsDirty => _title != _loadedTitle || _content != _loadedContent || _mood != _loadedMood;
+
         protected override async Task OnInitializedAsync()
         {
             if (Date.HasValue)
@@ -53,10 +59,36 @@ namespace Journal.Components.Pages
             _title = entry?.Title ?? string.Empty;
             _content = entry?.Content ?? string.Empty;
             _mood = entry?.Mood;
+            _loadedTitle = _title;
+            _loadedContent = _content;
+            _loadedMood = _mood;
+        }
+
+        private async Task<bool> ConfirmDiscardIfDirtyAsync()
+        {
+            if (!IsDirty)
+            {
+                return true;
+            }
+
+            var parameters = new DialogParameters
+            {
+                [nameof(ConfirmDialog.Title)] = "Discard changes?",
+                [nameof(ConfirmDialog.Message)] = "You have unsaved changes that will be lost.",
+                [nameof(ConfirmDialog.ConfirmText)] = "Discard"
+            };
+            var dialog = await DialogService.ShowAsync<ConfirmDialog>(string.Empty, parameters);
+            var result = await dialog.Result;
+            return result is { Canceled: false };
         }
 
         private async Task OnDateChanged(DateTime? date)
         {
+            if (!await ConfirmDiscardIfDirtyAsync())
+            {
+                return;
+            }
+
             Date = date;
             if (date.HasValue)
             {
@@ -68,6 +100,9 @@ namespace Journal.Components.Pages
                 _title = string.Empty;
                 _content = string.Empty;
                 _mood = null;
+                _loadedTitle = string.Empty;
+                _loadedContent = string.Empty;
+                _loadedMood = null;
             }
         }
 
@@ -139,8 +174,13 @@ namespace Journal.Components.Pages
             });
         }
 
-        private void Cancel()
+        private async Task Cancel()
         {
+            if (!await ConfirmDiscardIfDirtyAsync())
+            {
+                return;
+            }
+
             MudDialog.Close(DialogResult.Cancel());
         }
 
