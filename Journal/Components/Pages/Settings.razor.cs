@@ -269,9 +269,9 @@ namespace Journal.Components.Pages
         {
             var parameters = new DialogParameters
             {
-                [nameof(ConfirmDialog.Title)] = "Delete all data?",
-                [nameof(ConfirmDialog.Message)] = "This will permanently delete your account and every journal entry on this device. This cannot be undone.",
-                [nameof(ConfirmDialog.ConfirmText)] = "Delete everything"
+                [nameof(ConfirmDialog.Title)] = "Permanently delete all data?",
+                [nameof(ConfirmDialog.Message)] = "You're about to permanently delete all data stored by Journal, including your journals, entries, and settings. This action cannot be undone.",
+                [nameof(ConfirmDialog.ConfirmText)] = "Delete permanently"
             };
             var dialog = await DialogService.ShowAsync<ConfirmDialog>(string.Empty, parameters);
             var result = await dialog.Result;
