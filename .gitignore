@@ -6,3 +6,6 @@ obj/
 /.claude/settings.json
 /.claude/settings.json
 /nul
+/docs/images
+/docs/INSTALL.md
+/docs/Installing Journal.docx
