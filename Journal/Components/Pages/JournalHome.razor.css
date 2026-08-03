@@ -7,13 +7,62 @@
     line-height: 1.2;
 }
 
+.journal-list-card {
+    border-radius: 16px;
+    overflow: hidden;
+}
+
 .journal-day-badge {
     min-width: 5.5rem;
     font-weight: 700;
+    padding: 0.15rem 0.65rem;
+    border-radius: 999px;
+    background-color: color-mix(in srgb, var(--mud-palette-primary) 12%, transparent);
+}
+
+.journal-day-header {
+    padding: 0.5rem 1rem 0.2rem;
+    margin-top: 0.5rem;
+}
+
+.journal-time-badge {
+    min-width: 4rem;
+    font-weight: 700;
+    opacity: 0.7;
 }
 
 .journal-list ::deep .journal-entry-item.mud-list-item {
-    padding-top: 0.35rem;
-    padding-bottom: 0.35rem;
+    padding: 0.5rem 1rem;
     min-height: 0;
+    border-radius: 10px;
+    transition: background-color 0.1s ease-out;
+}
+
+.journal-list ::deep .journal-entry-item.mud-list-item:hover,
+.journal-list ::deep .journal-entry-item.mud-list-item:active {
+    background-color: color-mix(in srgb, var(--mud-palette-text-primary) 6%, transparent);
+}
+
+.journal-swipe-row {
+    position: relative;
+    overflow: hidden;
+}
+
+.journal-swipe-delete {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--mud-palette-error);
+}
+
+.journal-swipe-content {
+    position: relative;
+    background-color: var(--mud-palette-surface);
+    transition: transform 0.2s ease-out;
+    touch-action: pan-y;
 }

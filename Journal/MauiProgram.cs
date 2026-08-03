@@ -36,6 +36,7 @@ namespace Journal
             builder.Services.AddSingleton<IAuthService, AuthService>();
             builder.Services.AddSingleton<IJournalRepository, JournalRepository>();
             builder.Services.AddSingleton<ISettingsService, AppSettingsService>();
+            builder.Services.AddSingleton<ILoadingService, LoadingService>();
 
 #if DEBUG
     		builder.Services.AddBlazorWebViewDeveloperTools();

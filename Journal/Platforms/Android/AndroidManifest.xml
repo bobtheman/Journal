@@ -5,4 +5,14 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <!-- Android 11+ package visibility: MediaPicker.CapturePhotoAsync resolves this intent
+         via PackageManager before launching the camera app; without declaring it here the
+         resolve silently fails and CapturePhotoAsync throws FeatureNotSupportedException. -->
+    <queries>
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE" />
+        </intent>
+    </queries>
 </manifest>

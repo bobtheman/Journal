@@ -1,3 +1,4 @@
+using Journal.Components.Shared;
 using Journal.Services.Interfaces;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
@@ -36,7 +37,14 @@ namespace Journal.Components.Layout
         [Inject]
         private NavigationManager NavigationManager { get; set; } = default!;
 
+        [Inject]
+        private IUpdateService UpdateService { get; set; } = default!;
+
+        [Inject]
+        private IDialogService DialogService { get; set; } = default!;
+
         private bool _drawerOpen = true;
+        private bool _updateCheckedThisSession;
 
         protected override void OnInitialized()
         {
@@ -49,7 +57,46 @@ namespace Journal.Components.Layout
             if (firstRender)
             {
                 EnsureRoute();
+                CheckForUpdateOnStartup();
             }
+        }
+
+        // Self-update download/install is Android-only (UpdateService.DownloadAndInstallAsync);
+        // other platforms keep the existing manual "Check for update" button in Settings.
+        private void CheckForUpdateOnStartup()
+        {
+            if (_updateCheckedThisSession || !SessionState.IsAuthenticated || !OperatingSystem.IsAndroid())
+            {
+                return;
+            }
+
+            _updateCheckedThisSession = true;
+
+            _ = InvokeAsync(async () =>
+            {
+                var update = await UpdateService.CheckForUpdateAsync();
+                if (update is null)
+                {
+                    return;
+                }
+
+                var parameters = new DialogParameters { [nameof(UpdateAvailableDialog.Update)] = update };
+                var dialog = await DialogService.ShowAsync<UpdateAvailableDialog>(string.Empty, parameters);
+                var result = await dialog.Result;
+                if (result is not { Canceled: false })
+                {
+                    return;
+                }
+
+                try
+                {
+                    await UpdateService.DownloadAndInstallAsync(update);
+                }
+                catch (Exception)
+                {
+                    Snackbar.Add("Update download failed. Try again from Settings.", Severity.Error);
+                }
+            });
         }
 
         private void OnSessionChanged()

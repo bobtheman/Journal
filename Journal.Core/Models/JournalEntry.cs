@@ -7,7 +7,6 @@ namespace Journal.Models
         [PrimaryKey, AutoIncrement]
         public int Id { get; set; }
 
-        [Indexed(Unique = true)]
         public DateTime EntryDate { get; set; }
 
         public string Title { get; set; } = string.Empty;

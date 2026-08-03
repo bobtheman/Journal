@@ -3,27 +3,31 @@
     <TitleContent>
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
             <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="Cancel" Edge="Edge.Start" />
-            <MudText Typo="Typo.h6">@(Date?.ToString("dddd, d MMMM yyyy") ?? "New entry")</MudText>
+            <MudText Typo="Typo.h6">@(EntryDateTime?.ToString("dddd, d MMMM yyyy") ?? "New entry")</MudText>
         </MudStack>
     </TitleContent>
     <DialogContent>
         <MudContainer MaxWidth="MaxWidth.Small" Class="pa-0">
-            <MudDatePicker Label="Date" Date="Date" DateChanged="OnDateChanged" DateFormat="dddd, dd MMMM yyyy"
-                           MaxDate="DateTime.Today" Required="true" Error="@(!Date.HasValue)"
-                           ErrorText="Date is required" Class="mb-4" />
+            <MudStack Row="true" Spacing="2" Class="mb-4">
+                <MudDatePicker Label="Date" Date="_entryDate" DateChanged="OnDateChanged" DateFormat="dd MMMM yyyy"
+                               MaxDate="DateTime.Today" Required="true" Error="@(!_entryDate.HasValue)"
+                               ErrorText="Date is required" />
+                <MudTimePicker Label="Time" Time="_entryTime" TimeChanged="OnTimeChanged" />
+            </MudStack>
 
             <MudTextField T="string" Label="Title" @bind-Value="_title" Variant="Variant.Outlined"
                           spellcheck="true" autocorrect="on" autocapitalize="sentences" Class="mb-4" />
 
-            <MudStack Row="true" Justify="Justify.Center" Spacing="1" Class="mb-4">
+            <MudStack Row="true" Justify="Justify.Center" Spacing="1" Class="mb-4 mood-picker">
                 @foreach (var mood in MoodIcons.All)
                 {
+                    var selected = _mood == mood.Value;
                     <MudIconButton Icon="@mood.Icon"
-                                   Color="@(_mood == mood.Value ? mood.Color : Color.Default)"
-                                   Style="@(_mood == mood.Value && mood.Hex is not null ? $"color:{mood.Hex}" : null)"
+                                   Class="@(selected ? "mood-icon-selected" : "mood-icon-unselected")"
+                                   Style="@($"color:{mood.Hex}")"
                                    Size="Size.Large"
                                    title="@mood.Label"
-                                   OnClick="@(() => _mood = _mood == mood.Value ? null : mood.Value)" />
+                                   OnClick="@(() => _mood = selected ? null : mood.Value)" />
                 }
             </MudStack>
 
@@ -32,10 +36,29 @@
                     <MudIconButton Icon="@Icons.Material.Filled.FormatBold" OnClick="@(() => WrapSelectionAsync("**", "**"))" title="Bold" />
                     <MudIconButton Icon="@Icons.Material.Filled.FormatItalic" OnClick="@(() => WrapSelectionAsync("_", "_"))" title="Italic" />
                     <MudIconButton Icon="@Icons.Material.Filled.FormatListBulleted" OnClick="InsertBulletAsync" title="Bullet point" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Image" title="Add image from gallery" HtmlTag="label" for="journal-image-input" />
+                    <MudIconButton Icon="@Icons.Material.Filled.PhotoCamera" title="Take photo" OnClick="TakePhotoAsync" />
                 </MudButtonGroup>
                 <MudButton Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Check"
-                           OnClick="SaveAsync" Disabled="@(!Date.HasValue)">Save</MudButton>
+                           OnClick="SaveAsync" Disabled="@(!_entryDate.HasValue)">Save</MudButton>
             </MudStack>
+
+            <InputFile id="journal-image-input" OnChange="OnImageSelectedAsync" accept="image/*" style="display:none" />
+
+            @if (_images.Count > 0)
+            {
+                <div class="journal-entry-thumbnails mb-4">
+                    @foreach (var image in _images)
+                    {
+                        <div class="journal-entry-thumbnail-frame" @onclick="@(() => ViewImageAsync(image))">
+                            <img src="@GetImageDataUri(image)" class="journal-entry-thumbnail" alt="Entry attachment" />
+                            <div class="journal-entry-thumbnail-overlay">
+                                <MudIcon Icon="@Icons.Material.Filled.ZoomIn" Color="Color.Surface" />
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
 
             <textarea @ref="_contentRef" @bind="_content" @bind:event="oninput"
                       class="journal-textarea" rows="14" spellcheck="true" autocorrect="on" autocapitalize="sentences"

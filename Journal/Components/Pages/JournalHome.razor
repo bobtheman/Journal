@@ -15,29 +15,54 @@
 else
 {
     string? lastPeriod = null;
+    DateTime? lastDay = null;
 
-    <MudList T="DateTime" Dense="true" Class="journal-list">
-        @foreach (var summary in _summaries)
-        {
-            var period = summary.EntryDate.ToString("MMMM yyyy");
-            if (period != lastPeriod)
+    <MudPaper Class="journal-list-card" Elevation="1">
+        <MudList T="int" Dense="true" Class="journal-list">
+            @foreach (var summary in _summaries)
             {
-                lastPeriod = period;
-                <MudListSubheader Class="journal-month-header">@period</MudListSubheader>
-            }
-            <MudListItem T="DateTime" OnClick="@(() => OpenEntryAsync(summary.EntryDate))" Class="journal-entry-item">
-                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                        <MudText Typo="Typo.body2" Color="Color.Primary" Class="journal-day-badge">@summary.EntryDate.ToString("dd/MM/yyyy")</MudText>
-                        <MudText Typo="Typo.body1">@(summary.Title == string.Empty ? summary.EntryDate.ToString("d MMM yyyy") : summary.Title)</MudText>
+                var period = summary.EntryDate.ToString("MMMM yyyy");
+                if (period != lastPeriod)
+                {
+                    lastPeriod = period;
+                    <MudListSubheader Class="journal-month-header">@period</MudListSubheader>
+                }
+
+                var day = summary.EntryDate.Date;
+                if (day != lastDay)
+                {
+                    lastDay = day;
+                    var rollup = _dayMoodRollup.TryGetValue(day, out var moodValue) ? moodValue : (int?)null;
+
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="journal-day-header">
+                        <MudText Typo="Typo.body2" Color="Color.Primary" Class="journal-day-badge">@day.ToString("dd/MM/yyyy")</MudText>
+                        @if (rollup.HasValue)
+                        {
+                            <MudIcon Icon="@MoodIcons.GetIcon(rollup.Value)" Size="Size.Small" Style="@($"color:{MoodIcons.GetHex(rollup.Value)}")" />
+                        }
                     </MudStack>
-                    @if (summary.Mood.HasValue)
-                    {
-                        <MudIcon Icon="@MoodIcons.GetIcon(summary.Mood.Value)" Color="@MoodIcons.GetColor(summary.Mood.Value)"
-                                 Style="@(MoodIcons.GetHex(summary.Mood.Value) is { } hex ? $"color:{hex}" : null)" Size="Size.Small" />
-                    }
-                </MudStack>
-            </MudListItem>
-        }
-    </MudList>
+                }
+
+                <div class="journal-swipe-row" @key="summary.Id">
+                    <div class="journal-swipe-delete" @onclick="@(() => DeleteEntryAsync(summary))">
+                        <MudIcon Icon="@Icons.Material.Filled.Delete" Color="Color.Surface" />
+                    </div>
+                    <div class="journal-swipe-content">
+                        <MudListItem T="int" OnClick="@(() => OpenEntryAsync(summary.Id))" Class="journal-entry-item">
+                            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudText Typo="Typo.body2" Class="journal-time-badge">@summary.EntryDate.ToString("h:mm tt")</MudText>
+                                    <MudText Typo="Typo.body1">@(summary.Title == string.Empty ? summary.EntryDate.ToString("h:mm tt") : summary.Title)</MudText>
+                                </MudStack>
+                                @if (summary.Mood.HasValue)
+                                {
+                                    <MudIcon Icon="@MoodIcons.GetIcon(summary.Mood.Value)" Size="Size.Small" Style="@($"color:{MoodIcons.GetHex(summary.Mood.Value)}")" />
+                                }
+                            </MudStack>
+                        </MudListItem>
+                    </div>
+                </div>
+            }
+        </MudList>
+    </MudPaper>
 }

@@ -12,6 +12,7 @@ namespace Journal.Services
         // GitHub Release, so we list the folder and read the version out of the filename
         // (e.g. "Journal_1_0_6.apk" -> build 6) instead of reading a release tag.
         private const string ContentsUrl = "https://api.github.com/repos/bobtheman/Journal/contents/Journal/Releases/Latest";
+        private const string ChangelogUrl = "https://raw.githubusercontent.com/bobtheman/Journal/main/CHANGELOG.md";
         private static readonly Regex VersionPattern = new(@"_(\d+)\.apk$", RegexOptions.IgnoreCase);
 
         private readonly HttpClient _httpClient;
@@ -61,7 +62,8 @@ namespace Journal.Services
                 {
                     Version = latestApk.Version.Value,
                     DownloadUrl = latestApk.File.download_url,
-                    ReleaseNotesUrl = latestApk.File.html_url
+                    ReleaseNotesUrl = latestApk.File.html_url,
+                    ReleaseNotes = await FetchReleaseNotesAsync()
                 };
             }
             catch (Exception ex)
@@ -69,6 +71,52 @@ namespace Journal.Services
                 Console.WriteLine($"Error checking for update: {ex.Message}");
                 return null;
             }
+        }
+
+        // Best-effort: the update itself must never be blocked by a missing/unparseable
+        // CHANGELOG.md, so any failure here just means the modal shows no notes.
+        private async Task<string> FetchReleaseNotesAsync()
+        {
+            try
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Get, ChangelogUrl);
+                request.Headers.UserAgent.ParseAdd("Journal-App");
+
+                var response = await _httpClient.SendAsync(request);
+                if (!response.IsSuccessStatusCode)
+                {
+                    return string.Empty;
+                }
+
+                var markdown = await response.Content.ReadAsStringAsync();
+                return ExtractFirstSection(markdown);
+            }
+            catch (Exception)
+            {
+                return string.Empty;
+            }
+        }
+
+        // Pulls the text under the first "## " heading (the most recent release/unreleased
+        // section) so the update dialog shows "what's new," not the entire changelog history.
+        private static string ExtractFirstSection(string markdown)
+        {
+            const string heading = "\n## ";
+            var start = markdown.IndexOf(heading, StringComparison.Ordinal);
+            if (start < 0)
+            {
+                return string.Empty;
+            }
+
+            var contentStart = markdown.IndexOf('\n', start + heading.Length);
+            if (contentStart < 0)
+            {
+                return string.Empty;
+            }
+
+            var end = markdown.IndexOf(heading, contentStart, StringComparison.Ordinal);
+            var section = end < 0 ? markdown[contentStart..] : markdown[contentStart..end];
+            return section.Trim();
         }
 
         private static int? TryParseVersion(string fileName)

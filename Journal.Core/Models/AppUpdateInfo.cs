@@ -7,5 +7,7 @@ namespace Journal.Models
         public string DownloadUrl { get; set; } = string.Empty;
 
         public string ReleaseNotesUrl { get; set; } = string.Empty;
+
+        public string ReleaseNotes { get; set; } = string.Empty;
     }
 }

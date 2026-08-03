@@ -1,0 +1,17 @@
+<MudDialog Class="image-viewer-dialog">
+    <TitleContent>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="Close" Edge="Edge.Start" />
+            <MudText Typo="Typo.h6">Attachment</MudText>
+        </MudStack>
+    </TitleContent>
+    <DialogContent>
+        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="image-viewer-content">
+            <img src="@ImageDataUri" class="image-viewer-image" alt="Entry attachment" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Error" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Delete" OnClick="DeleteAsync">Delete</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="Close">Close</MudButton>
+    </DialogActions>
+</MudDialog>
