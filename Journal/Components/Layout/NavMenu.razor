@@ -1,7 +1,7 @@
 <MudNavMenu Class="pa-2">
     @if (Username is not null)
     {
-        <MudText Typo="Typo.subtitle2" Class="px-4 py-2">@Username</MudText>
+        <MudText Typo="Typo.subtitle2" Class="px-4 py-2 text-truncate" Style="display:block; width:100%; min-width:0;" title="@Username">@Username</MudText>
     }
     <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Book">Journal</MudNavLink>
     <MudNavLink Href="settings" Icon="@Icons.Material.Filled.Settings">Settings</MudNavLink>

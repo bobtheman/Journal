@@ -25,6 +25,7 @@ namespace Journal
             builder.Services.AddMudServices();
 
             builder.Services.AddSingleton(LoadGoogleAuthOptions());
+            builder.Services.AddSingleton(LoadBackupOptions());
             builder.Services.AddHttpClient<IGoogleDriveService, GoogleDriveService>();
             builder.Services.AddHttpClient<IUpdateService, UpdateService>();
 
@@ -36,6 +37,8 @@ namespace Journal
             builder.Services.AddSingleton<IAuthService, AuthService>();
             builder.Services.AddSingleton<IJournalRepository, JournalRepository>();
             builder.Services.AddSingleton<ISettingsService, AppSettingsService>();
+            builder.Services.AddSingleton<ISettingsBackupService, SettingsBackupService>();
+            builder.Services.AddSingleton<IAuthBackupService, AuthBackupService>();
             builder.Services.AddSingleton<ILoadingService, LoadingService>();
 
 #if DEBUG
@@ -48,15 +51,37 @@ namespace Journal
 
         private static GoogleAuthOptions LoadGoogleAuthOptions()
         {
-            using var stream = FileSystem.OpenAppPackageFileAsync("appsettings.json").GetAwaiter().GetResult();
-            using var document = System.Text.Json.JsonDocument.Parse(stream);
+            using var document = LoadAppSettings();
             var google = document.RootElement.GetProperty("Google");
 
             return new GoogleAuthOptions
             {
                 ClientId = google.GetProperty("ClientId").GetString() ?? string.Empty,
-                ClientSecret = google.GetProperty("ClientSecret").GetString() ?? string.Empty
+                ClientSecret = google.GetProperty("ClientSecret").GetString() ?? string.Empty,
+                Scope = google.GetProperty("Scope").GetString() ?? string.Empty,
+                LoopbackPort = google.GetProperty("LoopbackPort").GetInt32(),
+                LoopbackHost = google.GetProperty("LoopbackHost").GetString() ?? string.Empty,
+                AuthUrl = google.GetProperty("AuthUrl").GetString() ?? string.Empty,
+                TokenUrl = google.GetProperty("TokenUrl").GetString() ?? string.Empty
             };
+        }
+
+        private static BackupOptions LoadBackupOptions()
+        {
+            using var document = LoadAppSettings();
+            var backup = document.RootElement.GetProperty("Backup");
+
+            return new BackupOptions
+            {
+                SettingsFileName = backup.GetProperty("SettingsFileName").GetString() ?? string.Empty,
+                AuthFileName = backup.GetProperty("AuthFileName").GetString() ?? string.Empty
+            };
+        }
+
+        private static System.Text.Json.JsonDocument LoadAppSettings()
+        {
+            using var stream = FileSystem.OpenAppPackageFileAsync("appsettings.json").GetAwaiter().GetResult();
+            return System.Text.Json.JsonDocument.Parse(stream);
         }
     }
 }

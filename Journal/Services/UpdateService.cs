@@ -158,7 +158,7 @@ namespace Journal.Services
                 context, $"{context.PackageName}.fileProvider", apkFile);
 
             var intent = new Android.Content.Intent(Android.Content.Intent.ActionView);
-            intent.SetDataAndType(apkUri, "application/vnd.android.package-archive");
+            intent.SetDataAndType(apkUri, Constants.AndroidPackageMimeType);
             intent.SetFlags(Android.Content.ActivityFlags.NewTask | Android.Content.ActivityFlags.GrantReadUriPermission);
             context.StartActivity(intent);
 #else

@@ -3,6 +3,15 @@
 All notable changes to Journal are documented here. Each release section is what the
 in-app update dialog shows to users when a newer build is available.
 
+## [1.0] (build 9)
+- Backups now include your settings and account details, so restoring on a new device
+  signs you back in correctly.
+- Only the latest backup is kept in Google Drive; older ones are cleaned up automatically.
+- Backup and Restore now show a loading indicator while they work.
+- Fixed an issue where restoring a backup could fail or corrupt local data.
+- Long usernames no longer push the side menu out of shape.
+- Entries can no longer be dated or timed in the future.
+
 ## [1.0] (build 8)
 - Swipe left on an entry in JournalHome to reveal a delete button.
 - Multiple entries per day, each with its own time and mood icon.

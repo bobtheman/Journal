@@ -3,6 +3,7 @@ using Google.Apis.Auth.OAuth2;
 using Google.Apis.Drive.v3;
 using Google.Apis.Services;
 using Journal.Data;
+using Journal.Exceptions;
 using Journal.Models;
 using Journal.Services.Interfaces;
 using Microsoft.Maui.ApplicationModel;
@@ -11,26 +12,27 @@ namespace Journal.Services
 {
     public class GoogleDriveService : IGoogleDriveService
     {
-        private const int LoopbackPort = 12345;
-        private const string BackupFolderName = "JournalApp";
-        private const string TokenStorageKey = "google_tokens";
-        private const string Scope = "https://www.googleapis.com/auth/drive.file";
-
         private readonly GoogleAuthOptions _options;
         private readonly HttpClient _httpClient;
         private readonly JournalDbContext _dbContext;
         private readonly ISettingsService _settingsService;
+        private readonly ISettingsBackupService _settingsBackupService;
+        private readonly IAuthBackupService _authBackupService;
 
         public GoogleDriveService(
             GoogleAuthOptions options,
             HttpClient httpClient,
             JournalDbContext dbContext,
-            ISettingsService settingsService)
+            ISettingsService settingsService,
+            ISettingsBackupService settingsBackupService,
+            IAuthBackupService authBackupService)
         {
             _options = options;
             _httpClient = httpClient;
             _dbContext = dbContext;
             _settingsService = settingsService;
+            _settingsBackupService = settingsBackupService;
+            _authBackupService = authBackupService;
         }
 
         public async Task<bool> IsSignedInAsync()
@@ -63,11 +65,11 @@ namespace Journal.Services
         }
 
         private string BuildAuthUrl(string challenge, string redirectUri) =>
-            "https://accounts.google.com/o/oauth2/v2/auth" +
+            _options.AuthUrl +
             $"?client_id={Uri.EscapeDataString(_options.ClientId)}" +
             $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
             "&response_type=code" +
-            $"&scope={Uri.EscapeDataString(Scope)}" +
+            $"&scope={Uri.EscapeDataString(_options.Scope)}" +
             "&access_type=offline&prompt=consent" +
             $"&code_challenge={challenge}&code_challenge_method=S256";
 
@@ -109,7 +111,7 @@ namespace Journal.Services
 
         public Task SignOutAsync()
         {
-            SecureStorage.Default.Remove(TokenStorageKey);
+            SecureStorage.Default.Remove(Constants.TokenStorageKey);
             return Task.CompletedTask;
         }
 
@@ -120,7 +122,7 @@ namespace Journal.Services
 
             var dbPath = _dbContext.DbPath;
 
-            var fileName = $"journal-{DateTime.UtcNow:yyyyMMdd-HHmmss}.db3";
+            var fileName = $"{Constants.DatabaseBackupNamePrefix}{DateTime.UtcNow:yyyyMMdd-HHmmss}.db3";
             var fileMetadata = new Google.Apis.Drive.v3.Data.File
             {
                 Name = fileName,
@@ -128,10 +130,32 @@ namespace Journal.Services
             };
 
             await using var stream = new FileStream(dbPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            var request = driveService.Files.Create(fileMetadata, stream, "application/octet-stream");
+            var request = driveService.Files.Create(fileMetadata, stream, Constants.OctetStreamMimeType);
+            request.Fields = Constants.DriveFileIdField;
             await request.UploadAsync();
 
+            var uploadedId = request.ResponseBody.Id;
+
+            await _settingsBackupService.UploadAsync(driveService, folderId);
+            await _authBackupService.UploadAsync(driveService, folderId);
+
+            await DeleteOldDatabaseBackupsAsync(driveService, folderId, uploadedId);
+
             _settingsService.LastSyncUtc = DateTime.UtcNow;
+        }
+
+        private static async Task DeleteOldDatabaseBackupsAsync(DriveService driveService, string folderId, string keepFileId)
+        {
+            var listRequest = driveService.Files.List();
+            listRequest.Q = $"'{folderId}' in parents and name contains '{Constants.DatabaseBackupNamePrefix}' and trashed = false";
+            listRequest.Fields = Constants.DriveFilesListFields;
+            var result = await listRequest.ExecuteAsync();
+
+            var oldBackups = result.Files?.Where(file => file.Id != keepFileId) ?? [];
+            foreach (var oldBackup in oldBackups)
+            {
+                await driveService.Files.Delete(oldBackup.Id).ExecuteAsync();
+            }
         }
 
         public async Task<bool> RestoreLatestAsync()
@@ -140,10 +164,10 @@ namespace Journal.Services
             var folderId = await EnsureBackupFolderAsync(driveService);
 
             var listRequest = driveService.Files.List();
-            listRequest.Q = $"'{folderId}' in parents and trashed = false";
-            listRequest.OrderBy = "modifiedTime desc";
+            listRequest.Q = $"'{folderId}' in parents and name contains '{Constants.DatabaseBackupNamePrefix}' and trashed = false";
+            listRequest.OrderBy = Constants.DriveModifiedTimeDescending;
             listRequest.PageSize = 1;
-            listRequest.Fields = "files(id, name)";
+            listRequest.Fields = Constants.DriveFilesListFields;
 
             var result = await listRequest.ExecuteAsync();
             var latest = result.Files?.FirstOrDefault();
@@ -152,11 +176,20 @@ namespace Journal.Services
                 return false;
             }
 
+            if (!await _authBackupService.ExistsAsync(driveService, folderId))
+            {
+                throw new IncompatibleBackupException(
+                    "This backup was made before account credentials were included and can't be restored. Sign in on the original device and create a new backup first.");
+            }
+
             await _dbContext.CloseAsync();
             var dbPath = _dbContext.DbPath;
 
             await using var output = System.IO.File.Create(dbPath);
             await driveService.Files.Get(latest.Id).DownloadAsync(output);
+
+            await _settingsBackupService.DownloadAsync(driveService, folderId);
+            await _authBackupService.DownloadAsync(driveService, folderId);
 
             _settingsService.LastSyncUtc = DateTime.UtcNow;
             return true;
@@ -177,8 +210,8 @@ namespace Journal.Services
         private static async Task<string> EnsureBackupFolderAsync(DriveService driveService)
         {
             var listRequest = driveService.Files.List();
-            listRequest.Q = $"name = '{BackupFolderName}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false";
-            listRequest.Fields = "files(id, name)";
+            listRequest.Q = $"name = '{Constants.BackupFolderName}' and mimeType = '{Constants.GoogleDriveFolderMimeType}' and trashed = false";
+            listRequest.Fields = Constants.DriveFilesListFields;
             var result = await listRequest.ExecuteAsync();
 
             var existing = result.Files?.FirstOrDefault();
@@ -189,14 +222,14 @@ namespace Journal.Services
 
             var folderMetadata = new Google.Apis.Drive.v3.Data.File
             {
-                Name = BackupFolderName,
-                MimeType = "application/vnd.google-apps.folder"
+                Name = Constants.BackupFolderName,
+                MimeType = Constants.GoogleDriveFolderMimeType
             };
             var created = await driveService.Files.Create(folderMetadata).ExecuteAsync();
             return created.Id;
         }
 
-        private static string GetRedirectUri() => $"http://127.0.0.1:{LoopbackPort}/";
+        private string GetRedirectUri() => $"http://{_options.LoopbackHost}:{_options.LoopbackPort}/";
 
         private async Task<TokenData?> ExchangeCodeForTokensAsync(string code, string codeVerifier, string redirectUri)
         {
@@ -211,7 +244,7 @@ namespace Journal.Services
             };
 
             var response = await _httpClient.PostAsync(
-                "https://oauth2.googleapis.com/token", new FormUrlEncodedContent(form));
+                _options.TokenUrl, new FormUrlEncodedContent(form));
 
             if (!response.IsSuccessStatusCode)
             {
@@ -245,7 +278,7 @@ namespace Journal.Services
             };
 
             var response = await _httpClient.PostAsync(
-                "https://oauth2.googleapis.com/token", new FormUrlEncodedContent(form));
+                _options.TokenUrl, new FormUrlEncodedContent(form));
 
             if (!response.IsSuccessStatusCode)
             {
@@ -284,29 +317,13 @@ namespace Journal.Services
 
         private static async Task<TokenData?> LoadTokensAsync()
         {
-            var json = await SecureStorage.Default.GetAsync(TokenStorageKey);
+            var json = await SecureStorage.Default.GetAsync(Constants.TokenStorageKey);
             return string.IsNullOrEmpty(json) ? null : JsonSerializer.Deserialize<TokenData>(json);
         }
 
         private static async Task SaveTokensAsync(TokenData tokens)
         {
-            await SecureStorage.Default.SetAsync(TokenStorageKey, JsonSerializer.Serialize(tokens));
+            await SecureStorage.Default.SetAsync(Constants.TokenStorageKey, JsonSerializer.Serialize(tokens));
         }
-
-        private class TokenData
-        {
-            public string AccessToken { get; set; } = string.Empty;
-            public string? RefreshToken { get; set; }
-            public DateTime ExpiresAtUtc { get; set; }
-        }
-
-        // ReSharper disable InconsistentNaming
-        private class TokenExchangeResponse
-        {
-            public string access_token { get; set; } = string.Empty;
-            public string? refresh_token { get; set; }
-            public int expires_in { get; set; }
-        }
-        // ReSharper restore InconsistentNaming
     }
 }

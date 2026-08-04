@@ -12,7 +12,8 @@
                 <MudDatePicker Label="Date" Date="_entryDate" DateChanged="OnDateChanged" DateFormat="dd MMMM yyyy"
                                MaxDate="DateTime.Today" Required="true" Error="@(!_entryDate.HasValue)"
                                ErrorText="Date is required" />
-                <MudTimePicker Label="Time" Time="_entryTime" TimeChanged="OnTimeChanged" />
+                <MudTimePicker Label="Time" Time="_entryTime" TimeChanged="OnTimeChanged"
+                               Error="@IsFutureDateTime" ErrorText="Time cannot be in the future" />
             </MudStack>
 
             <MudTextField T="string" Label="Title" @bind-Value="_title" Variant="Variant.Outlined"
@@ -40,7 +41,7 @@
                     <MudIconButton Icon="@Icons.Material.Filled.PhotoCamera" title="Take photo" OnClick="TakePhotoAsync" />
                 </MudButtonGroup>
                 <MudButton Color="Color.Primary" Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Check"
-                           OnClick="SaveAsync" Disabled="@(!_entryDate.HasValue)">Save</MudButton>
+                           OnClick="SaveAsync" Disabled="@(!_entryDate.HasValue || IsFutureDateTime)">Save</MudButton>
             </MudStack>
 
             <InputFile id="journal-image-input" OnChange="OnImageSelectedAsync" accept="image/*" style="display:none" />

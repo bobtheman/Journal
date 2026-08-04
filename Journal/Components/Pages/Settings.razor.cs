@@ -31,6 +31,9 @@ namespace Journal.Components.Pages
         [Inject]
         private IUpdateService UpdateService { get; set; } = default!;
 
+        [Inject]
+        private ILoadingService LoadingService { get; set; } = default!;
+
         [Parameter]
         [SupplyParameterFromQuery(Name = "enableBiometric")]
         public bool EnableBiometricRequested { get; set; }
@@ -113,18 +116,21 @@ namespace Journal.Components.Pages
         {
             _busy = true;
             _status = null;
-            try
+            using (LoadingService.BeginLoading())
             {
-                await GoogleDriveService.BackupAsync();
-                _status = "Backup complete.";
-            }
-            catch (Exception ex)
-            {
-                _status = $"Backup failed: {ex.Message}";
-            }
-            finally
-            {
-                _busy = false;
+                try
+                {
+                    await GoogleDriveService.BackupAsync();
+                    _status = "Backup complete.";
+                }
+                catch (Exception ex)
+                {
+                    _status = $"Backup failed: {ex.Message}";
+                }
+                finally
+                {
+                    _busy = false;
+                }
             }
         }
 
@@ -132,22 +138,25 @@ namespace Journal.Components.Pages
         {
             _busy = true;
             _status = null;
-            try
+            using (LoadingService.BeginLoading())
             {
-                var restored = await GoogleDriveService.RestoreLatestAsync();
-                _status = restored ? "Restored latest backup. Please log in again." : "No backup found.";
-                if (restored)
+                try
                 {
-                    await AuthService.LogoutAsync();
+                    var restored = await GoogleDriveService.RestoreLatestAsync();
+                    _status = restored ? "Restored latest backup. Please log in again." : "No backup found.";
+                    if (restored)
+                    {
+                        await AuthService.LogoutAsync();
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                _status = $"Restore failed: {ex.Message}";
-            }
-            finally
-            {
-                _busy = false;
+                catch (Exception ex)
+                {
+                    _status = $"Restore failed: {ex.Message}";
+                }
+                finally
+                {
+                    _busy = false;
+                }
             }
         }
 

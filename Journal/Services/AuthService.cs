@@ -9,8 +9,6 @@ namespace Journal.Services
 {
     public class AuthService : IAuthService
     {
-        private const string SaltKey = "auth_salt";
-        private const string UsernameKey = "auth_username";
         private const string BiometricPasswordKey = "auth_biometric_password";
 
         private readonly JournalDbContext _dbContext;
@@ -30,17 +28,17 @@ namespace Journal.Services
         }
 
         public bool HasAccount =>
-            _dbContext.DatabaseFileExists && Preferences.Default.ContainsKey(SaltKey);
+            _dbContext.DatabaseFileExists && Preferences.Default.ContainsKey(Constants.AuthSaltKey);
 
-        public string? Username => Preferences.Default.Get(UsernameKey, (string?)null);
+        public string? Username => Preferences.Default.Get(Constants.AuthUsernameKey, (string?)null);
 
         public async Task SetupAsync(string username, string password)
         {
             var salt = PasswordKeyDerivation.GenerateSalt();
             var key = PasswordKeyDerivation.DeriveKeyHex(password, salt);
 
-            Preferences.Default.Set(SaltKey, Convert.ToHexString(salt));
-            Preferences.Default.Set(UsernameKey, username);
+            Preferences.Default.Set(Constants.AuthSaltKey, Convert.ToHexString(salt));
+            Preferences.Default.Set(Constants.AuthUsernameKey, username);
 
             await _dbContext.OpenAsync(key);
             _currentKey = key;
@@ -49,7 +47,7 @@ namespace Journal.Services
 
         public async Task<bool> LoginAsync(string password)
         {
-            var saltHex = Preferences.Default.Get(SaltKey, string.Empty);
+            var saltHex = Preferences.Default.Get(Constants.AuthSaltKey, string.Empty);
             if (string.IsNullOrEmpty(saltHex))
             {
                 return false;
@@ -82,7 +80,7 @@ namespace Journal.Services
             var newKey = PasswordKeyDerivation.DeriveKeyHex(newPassword, newSalt);
 
             await _dbContext.RekeyAsync(newKey);
-            Preferences.Default.Set(SaltKey, Convert.ToHexString(newSalt));
+            Preferences.Default.Set(Constants.AuthSaltKey, Convert.ToHexString(newSalt));
             _currentKey = newKey;
             return true;
         }
@@ -118,7 +116,7 @@ namespace Journal.Services
                 return false;
             }
 
-            var saltHex = Preferences.Default.Get(SaltKey, string.Empty);
+            var saltHex = Preferences.Default.Get(Constants.AuthSaltKey, string.Empty);
             if (string.IsNullOrEmpty(saltHex))
             {
                 return false;

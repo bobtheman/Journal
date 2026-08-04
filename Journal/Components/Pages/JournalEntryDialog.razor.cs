@@ -62,6 +62,8 @@ namespace Journal.Components.Pages
             ? _entryDate.Value.Date + (_entryTime ?? TimeSpan.Zero)
             : null;
 
+        private bool IsFutureDateTime => EntryDateTime > DateTime.Now;
+
         private bool IsDirty =>
             _title != _loadedTitle ||
             _content != _loadedContent ||
@@ -181,6 +183,12 @@ namespace Journal.Components.Pages
 
         private async Task AddImageAsync(byte[] imageData, string imageMimeType)
         {
+            if (IsFutureDateTime)
+            {
+                Snackbar.Add("Set a date and time that isn't in the future before adding images.", Severity.Error);
+                return;
+            }
+
             using var loading = LoadingService.BeginLoading();
             await Task.Delay(1); 
             var entryId = await EnsureEntrySavedAsync();
@@ -257,7 +265,7 @@ namespace Journal.Components.Pages
 
         private async Task SaveAsync()
         {
-            if (!EntryDateTime.HasValue)
+            if (!EntryDateTime.HasValue || IsFutureDateTime)
             {
                 return;
             }
