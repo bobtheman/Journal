@@ -88,14 +88,7 @@ namespace Journal.Components.Layout
                     return;
                 }
 
-                try
-                {
-                    await UpdateService.DownloadAndInstallAsync(update);
-                }
-                catch (Exception)
-                {
-                    Snackbar.Add("Update download failed. Try again from Settings.", Severity.Error);
-                }
+                NavigationManager.NavigateTo("settings?installUpdate=true");
             });
         }
 

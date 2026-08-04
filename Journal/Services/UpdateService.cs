@@ -128,7 +128,21 @@ namespace Journal.Services
         public async Task DownloadAndInstallAsync(AppUpdateInfo update, IProgress<double>? progress = null)
         {
 #if ANDROID
-            var apkPath = Path.Combine(FileSystem.CacheDirectory, "journal-update.apk");
+            // Named per version (not a fixed "journal-update.apk") so a file still held open by
+            // the Android package installer from a previous install prompt never collides with a
+            // fresh download and throws IOException: sharing violation.
+            var apkPath = Path.Combine(FileSystem.CacheDirectory, $"journal-update-{update.Version}.apk");
+            if (File.Exists(apkPath))
+            {
+                try
+                {
+                    File.Delete(apkPath);
+                }
+                catch (IOException)
+                {
+                    apkPath = Path.Combine(FileSystem.CacheDirectory, $"journal-update-{update.Version}-{Guid.NewGuid():N}.apk");
+                }
+            }
 
             using (var response = await _httpClient.GetAsync(update.DownloadUrl, HttpCompletionOption.ResponseHeadersRead))
             {

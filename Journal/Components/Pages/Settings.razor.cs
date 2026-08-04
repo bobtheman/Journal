@@ -4,6 +4,7 @@ using Journal.Services;
 using Journal.Services.Interfaces;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Journal.Components.Pages
@@ -34,9 +35,18 @@ namespace Journal.Components.Pages
         [Inject]
         private ILoadingService LoadingService { get; set; } = default!;
 
+        [Inject]
+        private IJSRuntime JS { get; set; } = default!;
+
         [Parameter]
         [SupplyParameterFromQuery(Name = "enableBiometric")]
         public bool EnableBiometricRequested { get; set; }
+
+        [Parameter]
+        [SupplyParameterFromQuery(Name = "installUpdate")]
+        public bool InstallUpdateRequested { get; set; }
+
+        private ElementReference _updateSectionRef;
 
         private ThemeMode _themeMode;
 
@@ -75,6 +85,23 @@ namespace Journal.Components.Pages
             if (EnableBiometricRequested && _biometricHwAvailable && !_biometricEnabled)
             {
                 _showBiometricPasswordPrompt = true;
+            }
+
+            if (InstallUpdateRequested)
+            {
+                await CheckForUpdateAsync();
+                if (_updateAvailable is not null)
+                {
+                    await InstallUpdateAsync();
+                }
+            }
+        }
+
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+            if (firstRender && InstallUpdateRequested)
+            {
+                await JS.InvokeVoidAsync("pageUtils.scrollIntoView", _updateSectionRef);
             }
         }
 
@@ -337,6 +364,10 @@ namespace Journal.Components.Pages
             try
             {
                 await UpdateService.DownloadAndInstallAsync(_updateAvailable, progress);
+            }
+            catch (IOException)
+            {
+                _updateStatus = "Couldn't save the update file. Close any pending install prompt and try again.";
             }
             catch (Exception ex)
             {

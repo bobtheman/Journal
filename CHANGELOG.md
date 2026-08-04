@@ -3,6 +3,12 @@
 All notable changes to Journal are documented here. Each release section is what the
 in-app update dialog shows to users when a newer build is available.
 
+## [1.0] (build 10)
+- Fixed an "app update" failure that could happen if a previous install prompt was still
+  open, and cleaned up the error message shown if it happens again.
+- Confirming an update download now takes you to Settings so you can see its progress,
+  instead of downloading silently in the background.
+
 ## [1.0] (build 9)
 - Backups now include your settings and account details, so restoring on a new device
   signs you back in correctly.
