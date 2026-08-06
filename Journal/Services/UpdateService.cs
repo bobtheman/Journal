@@ -24,6 +24,15 @@ namespace Journal.Services
 
         public async Task<AppUpdateInfo?> CheckForUpdateAsync()
         {
+#if ANDROID
+            // Play-distributed installs must not self-update via sideloaded APK - Play Store
+            // owns updates for those installs (and flags apps that route around it). Only
+            // check GitHub when the app was installed by some other means (e.g. direct APK).
+            if (IsInstalledFromPlayStore())
+            {
+                return null;
+            }
+#endif
             try
             {
                 using var request = new HttpRequestMessage(HttpMethod.Get, ContentsUrl);
@@ -124,6 +133,35 @@ namespace Journal.Services
             var match = VersionPattern.Match(fileName);
             return match.Success ? int.Parse(match.Groups[1].Value) : null;
         }
+
+#if ANDROID
+        // Installer package is "com.android.vending" only when Play Store performed the
+        // install; sideloaded/GitHub APKs report null or another installer.
+        private static bool IsInstalledFromPlayStore()
+        {
+            var context = Android.App.Application.Context;
+            var packageManager = context.PackageManager;
+            var packageName = context.PackageName;
+            if (packageManager is null || packageName is null)
+            {
+                return false;
+            }
+
+            string? installer;
+            if (OperatingSystem.IsAndroidVersionAtLeast(30))
+            {
+                installer = packageManager.GetInstallSourceInfo(packageName).InstallingPackageName;
+            }
+            else
+            {
+#pragma warning disable CA1422 // GetInstallerPackageName is deprecated on API 30+, still needed below R
+                installer = packageManager.GetInstallerPackageName(packageName);
+#pragma warning restore CA1422
+            }
+
+            return installer == "com.android.vending";
+        }
+#endif
 
         public async Task DownloadAndInstallAsync(AppUpdateInfo update, IProgress<double>? progress = null)
         {
