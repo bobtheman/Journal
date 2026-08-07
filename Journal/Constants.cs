@@ -12,7 +12,6 @@ namespace Journal
         public const string GoogleDriveFolderMimeType = "application/vnd.google-apps.folder";
         public const string OctetStreamMimeType = "application/octet-stream";
         public const string JsonMimeType = "application/json";
-        public const string AndroidPackageMimeType = "application/vnd.android.package-archive";
 
         public const string DriveFilesListFields = "files(id, name)";
         public const string DriveFileIdField = "id";

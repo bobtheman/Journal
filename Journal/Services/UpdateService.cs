@@ -1,231 +1,24 @@
-using System.Net.Http.Json;
-using System.Text.RegularExpressions;
 using Journal.Models;
 using Journal.Services.Interfaces;
 
 namespace Journal.Services
 {
+    // Self-update (GitHub-hosted APK check + in-app install) was removed for the Google
+    // Play release: it required android.permission.REQUEST_INSTALL_PACKAGES, which Play
+    // rejects outside a short list of permitted app categories (browsers, file managers,
+    // etc.) that this app doesn't belong to. Play owns updates for Play-distributed installs
+    // anyway. Kept as a no-op implementation so callers (Settings, MainLayout) don't need to
+    // special-case update checks away.
     public class UpdateService : IUpdateService
     {
-        // Public repo - the GitHub Contents API is anonymously readable, no token needed.
-        // The APK is committed straight into this repo folder rather than published as a
-        // GitHub Release, so we list the folder and read the version out of the filename
-        // (e.g. "Journal_1_0_6.apk" -> build 6) instead of reading a release tag.
-        private const string ContentsUrl = "https://api.github.com/repos/bobtheman/Journal/contents/Journal/Releases/Latest";
-        private const string ChangelogUrl = "https://raw.githubusercontent.com/bobtheman/Journal/main/CHANGELOG.md";
-        private static readonly Regex VersionPattern = new(@"_(\d+)\.apk$", RegexOptions.IgnoreCase);
-
-        private readonly HttpClient _httpClient;
-
-        public UpdateService(HttpClient httpClient)
+        public Task<AppUpdateInfo?> CheckForUpdateAsync()
         {
-            _httpClient = httpClient;
+            return Task.FromResult<AppUpdateInfo?>(null);
         }
 
-        public async Task<AppUpdateInfo?> CheckForUpdateAsync()
+        public Task DownloadAndInstallAsync(AppUpdateInfo update, IProgress<double>? progress = null)
         {
-#if ANDROID
-            // Play-distributed installs must not self-update via sideloaded APK - Play Store
-            // owns updates for those installs (and flags apps that route around it). Only
-            // check GitHub when the app was installed by some other means (e.g. direct APK).
-            if (IsInstalledFromPlayStore())
-            {
-                return null;
-            }
-#endif
-            try
-            {
-                using var request = new HttpRequestMessage(HttpMethod.Get, ContentsUrl);
-                request.Headers.UserAgent.ParseAdd("Journal-App");
-
-                var response = await _httpClient.SendAsync(request);
-                if (!response.IsSuccessStatusCode)
-                {
-                    return null;
-                }
-
-                var files = await response.Content.ReadFromJsonAsync<GitHubContentItem[]>();
-                if (files is null)
-                {
-                    return null;
-                }
-
-                var latestApk = files
-                    .Select(f => new { File = f, Version = TryParseVersion(f.name) })
-                    .Where(x => x.Version.HasValue)
-                    .OrderByDescending(x => x.Version)
-                    .FirstOrDefault();
-
-                if (latestApk is null)
-                {
-                    return null;
-                }
-
-                var currentVersion = int.Parse(AppInfo.Current.BuildString);
-                if (latestApk.Version!.Value <= currentVersion)
-                {
-                    return null;
-                }
-
-                return new AppUpdateInfo
-                {
-                    Version = latestApk.Version.Value,
-                    DownloadUrl = latestApk.File.download_url,
-                    ReleaseNotesUrl = latestApk.File.html_url,
-                    ReleaseNotes = await FetchReleaseNotesAsync()
-                };
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error checking for update: {ex.Message}");
-                return null;
-            }
+            throw new PlatformNotSupportedException("Self-update was removed for Google Play compliance.");
         }
-
-        // Best-effort: the update itself must never be blocked by a missing/unparseable
-        // CHANGELOG.md, so any failure here just means the modal shows no notes.
-        private async Task<string> FetchReleaseNotesAsync()
-        {
-            try
-            {
-                using var request = new HttpRequestMessage(HttpMethod.Get, ChangelogUrl);
-                request.Headers.UserAgent.ParseAdd("Journal-App");
-
-                var response = await _httpClient.SendAsync(request);
-                if (!response.IsSuccessStatusCode)
-                {
-                    return string.Empty;
-                }
-
-                var markdown = await response.Content.ReadAsStringAsync();
-                return ExtractFirstSection(markdown);
-            }
-            catch (Exception)
-            {
-                return string.Empty;
-            }
-        }
-
-        // Pulls the text under the first "## " heading (the most recent release/unreleased
-        // section) so the update dialog shows "what's new," not the entire changelog history.
-        private static string ExtractFirstSection(string markdown)
-        {
-            const string heading = "\n## ";
-            var start = markdown.IndexOf(heading, StringComparison.Ordinal);
-            if (start < 0)
-            {
-                return string.Empty;
-            }
-
-            var contentStart = markdown.IndexOf('\n', start + heading.Length);
-            if (contentStart < 0)
-            {
-                return string.Empty;
-            }
-
-            var end = markdown.IndexOf(heading, contentStart, StringComparison.Ordinal);
-            var section = end < 0 ? markdown[contentStart..] : markdown[contentStart..end];
-            return section.Trim();
-        }
-
-        private static int? TryParseVersion(string fileName)
-        {
-            var match = VersionPattern.Match(fileName);
-            return match.Success ? int.Parse(match.Groups[1].Value) : null;
-        }
-
-#if ANDROID
-        // Installer package is "com.android.vending" only when Play Store performed the
-        // install; sideloaded/GitHub APKs report null or another installer.
-        private static bool IsInstalledFromPlayStore()
-        {
-            var context = Android.App.Application.Context;
-            var packageManager = context.PackageManager;
-            var packageName = context.PackageName;
-            if (packageManager is null || packageName is null)
-            {
-                return false;
-            }
-
-            string? installer;
-            if (OperatingSystem.IsAndroidVersionAtLeast(30))
-            {
-                installer = packageManager.GetInstallSourceInfo(packageName).InstallingPackageName;
-            }
-            else
-            {
-#pragma warning disable CA1422 // GetInstallerPackageName is deprecated on API 30+, still needed below R
-                installer = packageManager.GetInstallerPackageName(packageName);
-#pragma warning restore CA1422
-            }
-
-            return installer == "com.android.vending";
-        }
-#endif
-
-        public async Task DownloadAndInstallAsync(AppUpdateInfo update, IProgress<double>? progress = null)
-        {
-#if ANDROID
-            // Named per version (not a fixed "journal-update.apk") so a file still held open by
-            // the Android package installer from a previous install prompt never collides with a
-            // fresh download and throws IOException: sharing violation.
-            var apkPath = Path.Combine(FileSystem.CacheDirectory, $"journal-update-{update.Version}.apk");
-            if (File.Exists(apkPath))
-            {
-                try
-                {
-                    File.Delete(apkPath);
-                }
-                catch (IOException)
-                {
-                    apkPath = Path.Combine(FileSystem.CacheDirectory, $"journal-update-{update.Version}-{Guid.NewGuid():N}.apk");
-                }
-            }
-
-            using (var response = await _httpClient.GetAsync(update.DownloadUrl, HttpCompletionOption.ResponseHeadersRead))
-            {
-                response.EnsureSuccessStatusCode();
-                var totalBytes = response.Content.Headers.ContentLength ?? -1L;
-
-                await using var contentStream = await response.Content.ReadAsStreamAsync();
-                await using var fileStream = File.Create(apkPath);
-
-                var buffer = new byte[81920];
-                long totalRead = 0;
-                int read;
-                while ((read = await contentStream.ReadAsync(buffer)) > 0)
-                {
-                    await fileStream.WriteAsync(buffer.AsMemory(0, read));
-                    totalRead += read;
-                    if (totalBytes > 0)
-                    {
-                        progress?.Report((double)totalRead / totalBytes);
-                    }
-                }
-            }
-
-            var context = Android.App.Application.Context;
-            var apkFile = new Java.IO.File(apkPath);
-            var apkUri = AndroidX.Core.Content.FileProvider.GetUriForFile(
-                context, $"{context.PackageName}.fileProvider", apkFile);
-
-            var intent = new Android.Content.Intent(Android.Content.Intent.ActionView);
-            intent.SetDataAndType(apkUri, Constants.AndroidPackageMimeType);
-            intent.SetFlags(Android.Content.ActivityFlags.NewTask | Android.Content.ActivityFlags.GrantReadUriPermission);
-            context.StartActivity(intent);
-#else
-            await Task.CompletedTask;
-            throw new PlatformNotSupportedException("Self-update is only supported on Android.");
-#endif
-        }
-
-        // ReSharper disable InconsistentNaming
-        private class GitHubContentItem
-        {
-            public string name { get; set; } = string.Empty;
-            public string download_url { get; set; } = string.Empty;
-            public string html_url { get; set; } = string.Empty;
-        }
-        // ReSharper restore InconsistentNaming
     }
 }
